@@ -228,4 +228,5 @@ See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md). Key conventions:
 
 Proprietary. © 2026 ScaleMyPrints LLC.
 #   s c a l e m y p r i n t s  
+ #   s c a l e m y p r i n t s  
  
