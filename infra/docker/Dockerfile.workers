@@ -1,0 +1,83 @@
+# =============================================================================
+# ScaleMyPrints workers — multi-stage Dockerfile
+# =============================================================================
+# Build context: repository root (so workspace files are visible)
+# Build:  docker build -f infra/docker/Dockerfile.workers -t scalemyprints-workers .
+# Run:    docker run --rm -p 8000:8000 --env-file apps/workers/.env scalemyprints-workers
+# =============================================================================
+
+# ---------- Stage 1: builder (compiles deps with uv) ----------
+FROM python:3.11-slim AS builder
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1 \
+    UV_LINK_MODE=copy
+
+# Install uv (fast package installer)
+RUN pip install --no-cache-dir uv
+
+WORKDIR /app
+
+# Copy only manifest first for better layer caching
+COPY apps/workers/pyproject.toml /app/pyproject.toml
+
+# Generate lockfile + install dependencies
+RUN uv pip install --system --no-cache \
+    "fastapi>=0.110.0" \
+    "uvicorn[standard]>=0.29.0" \
+    "pydantic>=2.6.4" \
+    "pydantic-settings>=2.2.1" \
+    "httpx>=0.27.0" \
+    "tenacity>=8.2.3" \
+    "supabase>=2.4.0" \
+    "cryptography>=42.0.5" \
+    "python-jose[cryptography]>=3.3.0" \
+    "PyJWT>=2.8.0" \
+    "cachetools>=5.3.3" \
+    "sentry-sdk[fastapi]>=1.44.0" \
+    "structlog>=24.1.0" \
+    "openai>=1.14.2" \
+    "orjson>=3.10.0" \
+    "python-dateutil>=2.9.0"
+
+# ---------- Stage 2: runtime (minimal) ----------
+FROM python:3.11-slim AS runtime
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app/src \
+    WORKER_HOST=0.0.0.0 \
+    WORKER_PORT=8000
+
+# Non-root user for security
+RUN useradd --create-home --uid 1000 worker
+
+WORKDIR /app
+
+# Copy compiled deps from builder
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin/uvicorn /usr/local/bin/uvicorn
+
+# Copy application code
+COPY --chown=worker:worker apps/workers/src /app/src
+
+USER worker
+
+EXPOSE 8000
+
+# Container-aware healthcheck
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD python -c "import urllib.request,sys; \
+    urllib.request.urlopen('http://localhost:8000/health', timeout=3); \
+    sys.exit(0)" || exit 1
+
+CMD ["uvicorn", "scalemyprints.main:app", \
+     "--host", "0.0.0.0", \
+     "--port", "8000", \
+     "--workers", "2", \
+     "--access-log", \
+     "--log-level", "info", \
+     "--proxy-headers", \
+     "--forwarded-allow-ips", "*"]

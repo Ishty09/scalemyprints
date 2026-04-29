@@ -1,0 +1,3 @@
+/* Content script styles are inlined into the Shadow DOM widget.
+   This file exists so the manifest content_scripts.css entry resolves
+   to a valid file in the build output. */

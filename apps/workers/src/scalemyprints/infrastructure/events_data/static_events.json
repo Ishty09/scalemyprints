@@ -1,0 +1,1510 @@
+[
+  {
+    "id": "us-2026-01-01-new-year's-day",
+    "country": "US",
+    "month": 1,
+    "day": 1,
+    "name": "New Year's Day",
+    "category": "holiday",
+    "pod_relevance_score": 70,
+    "suggested_niches": [
+      "new year resolution",
+      "2026 vibes",
+      "fresh start"
+    ]
+  },
+  {
+    "id": "us-2026-01-20-martin-luther-king-jr-day",
+    "country": "US",
+    "month": 1,
+    "day": 20,
+    "name": "Martin Luther King Jr. Day",
+    "category": "holiday",
+    "pod_relevance_score": 50,
+    "suggested_niches": [
+      "mlk day",
+      "civil rights",
+      "i have a dream"
+    ]
+  },
+  {
+    "id": "us-2026-02-14-valentine's-day",
+    "country": "US",
+    "month": 2,
+    "day": 14,
+    "name": "Valentine's Day",
+    "category": "cultural",
+    "pod_relevance_score": 95,
+    "suggested_niches": [
+      "valentines day",
+      "love mug",
+      "couples shirt",
+      "galentines"
+    ]
+  },
+  {
+    "id": "us-2026-02-17-presidents-day",
+    "country": "US",
+    "month": 2,
+    "day": 17,
+    "name": "Presidents Day",
+    "category": "holiday",
+    "pod_relevance_score": 30,
+    "suggested_niches": [
+      "presidents day",
+      "patriotic"
+    ]
+  },
+  {
+    "id": "us-2026-03-08-international-women's-day",
+    "country": "US",
+    "month": 3,
+    "day": 8,
+    "name": "International Women's Day",
+    "category": "awareness",
+    "pod_relevance_score": 75,
+    "suggested_niches": [
+      "women empowerment",
+      "feminist",
+      "girl power",
+      "boss lady"
+    ]
+  },
+  {
+    "id": "us-2026-03-14-pi-day",
+    "country": "US",
+    "month": 3,
+    "day": 14,
+    "name": "Pi Day",
+    "category": "quirky",
+    "pod_relevance_score": 65,
+    "suggested_niches": [
+      "pi day",
+      "math teacher",
+      "stem"
+    ]
+  },
+  {
+    "id": "us-2026-03-17-st-patrick's-day",
+    "country": "US",
+    "month": 3,
+    "day": 17,
+    "name": "St. Patrick's Day",
+    "category": "cultural",
+    "pod_relevance_score": 90,
+    "suggested_niches": [
+      "st patricks day",
+      "irish",
+      "shamrock",
+      "lucky"
+    ]
+  },
+  {
+    "id": "us-2026-04-05-easter-sunday",
+    "country": "US",
+    "month": 4,
+    "day": 5,
+    "name": "Easter Sunday",
+    "category": "religious",
+    "pod_relevance_score": 85,
+    "suggested_niches": [
+      "easter",
+      "bunny",
+      "easter basket",
+      "spring"
+    ]
+  },
+  {
+    "id": "us-2026-04-22-earth-day",
+    "country": "US",
+    "month": 4,
+    "day": 22,
+    "name": "Earth Day",
+    "category": "awareness",
+    "pod_relevance_score": 70,
+    "suggested_niches": [
+      "earth day",
+      "save the planet",
+      "eco friendly",
+      "tree hugger"
+    ]
+  },
+  {
+    "id": "us-2026-05-04-star-wars-day",
+    "country": "US",
+    "month": 5,
+    "day": 4,
+    "name": "Star Wars Day",
+    "category": "quirky",
+    "pod_relevance_score": 75,
+    "suggested_niches": [
+      "may the fourth",
+      "star wars",
+      "jedi",
+      "force"
+    ]
+  },
+  {
+    "id": "us-2026-05-05-cinco-de-mayo",
+    "country": "US",
+    "month": 5,
+    "day": 5,
+    "name": "Cinco de Mayo",
+    "category": "cultural",
+    "pod_relevance_score": 80,
+    "suggested_niches": [
+      "cinco de mayo",
+      "fiesta",
+      "mexican heritage"
+    ]
+  },
+  {
+    "id": "us-2026-05-10-mother's-day",
+    "country": "US",
+    "month": 5,
+    "day": 10,
+    "name": "Mother's Day",
+    "category": "cultural",
+    "pod_relevance_score": 100,
+    "suggested_niches": [
+      "mom mug",
+      "mama shirt",
+      "best mom",
+      "mom life",
+      "dog mom"
+    ]
+  },
+  {
+    "id": "us-2026-05-25-memorial-day",
+    "country": "US",
+    "month": 5,
+    "day": 25,
+    "name": "Memorial Day",
+    "category": "holiday",
+    "pod_relevance_score": 60,
+    "suggested_niches": [
+      "memorial day",
+      "veteran",
+      "patriotic"
+    ]
+  },
+  {
+    "id": "us-2026-06-01-pride-month-begins",
+    "country": "US",
+    "month": 6,
+    "day": 1,
+    "name": "Pride Month Begins",
+    "category": "awareness",
+    "pod_relevance_score": 95,
+    "suggested_niches": [
+      "lgbtq pride",
+      "pride 2026",
+      "rainbow",
+      "love is love"
+    ]
+  },
+  {
+    "id": "us-2026-06-14-flag-day",
+    "country": "US",
+    "month": 6,
+    "day": 14,
+    "name": "Flag Day",
+    "category": "holiday",
+    "pod_relevance_score": 50,
+    "suggested_niches": [
+      "us flag",
+      "patriotic"
+    ]
+  },
+  {
+    "id": "us-2026-06-19-juneteenth",
+    "country": "US",
+    "month": 6,
+    "day": 19,
+    "name": "Juneteenth",
+    "category": "holiday",
+    "pod_relevance_score": 80,
+    "suggested_niches": [
+      "juneteenth",
+      "freedom day",
+      "black history"
+    ]
+  },
+  {
+    "id": "us-2026-06-21-father's-day",
+    "country": "US",
+    "month": 6,
+    "day": 21,
+    "name": "Father's Day",
+    "category": "cultural",
+    "pod_relevance_score": 100,
+    "suggested_niches": [
+      "dad mug",
+      "best dad",
+      "girl dad",
+      "boy dad",
+      "dad life"
+    ]
+  },
+  {
+    "id": "us-2026-07-04-independence-day",
+    "country": "US",
+    "month": 7,
+    "day": 4,
+    "name": "Independence Day",
+    "category": "holiday",
+    "pod_relevance_score": 100,
+    "suggested_niches": [
+      "4th of july",
+      "patriotic shirt",
+      "usa flag",
+      "freedom",
+      "stars and stripes"
+    ]
+  },
+  {
+    "id": "us-2026-08-26-national-dog-day",
+    "country": "US",
+    "month": 8,
+    "day": 26,
+    "name": "National Dog Day",
+    "category": "quirky",
+    "pod_relevance_score": 90,
+    "suggested_niches": [
+      "dog mom",
+      "dog dad",
+      "dog lover",
+      "rescue dog"
+    ]
+  },
+  {
+    "id": "us-2026-09-07-labor-day",
+    "country": "US",
+    "month": 9,
+    "day": 7,
+    "name": "Labor Day",
+    "category": "holiday",
+    "pod_relevance_score": 50,
+    "suggested_niches": [
+      "labor day",
+      "union worker"
+    ]
+  },
+  {
+    "id": "us-2026-09-01-back-to-school-season",
+    "country": "US",
+    "month": 9,
+    "day": 1,
+    "name": "Back to School Season",
+    "category": "school",
+    "pod_relevance_score": 95,
+    "suggested_niches": [
+      "teacher shirt",
+      "back to school",
+      "first day of school",
+      "kindergarten teacher"
+    ]
+  },
+  {
+    "id": "us-2026-10-11-national-coming-out-day",
+    "country": "US",
+    "month": 10,
+    "day": 11,
+    "name": "National Coming Out Day",
+    "category": "awareness",
+    "pod_relevance_score": 70,
+    "suggested_niches": [
+      "coming out",
+      "lgbtq pride",
+      "ally"
+    ]
+  },
+  {
+    "id": "us-2026-10-31-halloween",
+    "country": "US",
+    "month": 10,
+    "day": 31,
+    "name": "Halloween",
+    "category": "cultural",
+    "pod_relevance_score": 100,
+    "suggested_niches": [
+      "halloween",
+      "spooky season",
+      "pumpkin",
+      "witch",
+      "costume"
+    ]
+  },
+  {
+    "id": "us-2026-11-01-día-de-los-muertos",
+    "country": "US",
+    "month": 11,
+    "day": 1,
+    "name": "Día de los Muertos",
+    "category": "cultural",
+    "pod_relevance_score": 75,
+    "suggested_niches": [
+      "dia de los muertos",
+      "sugar skull",
+      "day of the dead"
+    ]
+  },
+  {
+    "id": "us-2026-11-11-veterans-day",
+    "country": "US",
+    "month": 11,
+    "day": 11,
+    "name": "Veterans Day",
+    "category": "holiday",
+    "pod_relevance_score": 75,
+    "suggested_niches": [
+      "veterans day",
+      "thank a vet",
+      "military family"
+    ]
+  },
+  {
+    "id": "us-2026-11-26-thanksgiving",
+    "country": "US",
+    "month": 11,
+    "day": 26,
+    "name": "Thanksgiving",
+    "category": "holiday",
+    "pod_relevance_score": 95,
+    "suggested_niches": [
+      "thanksgiving",
+      "thankful grateful blessed",
+      "turkey day",
+      "gobble"
+    ]
+  },
+  {
+    "id": "us-2026-11-27-black-friday",
+    "country": "US",
+    "month": 11,
+    "day": 27,
+    "name": "Black Friday",
+    "category": "cultural",
+    "pod_relevance_score": 70,
+    "suggested_niches": [
+      "black friday",
+      "shopping",
+      "deals"
+    ]
+  },
+  {
+    "id": "us-2026-12-14-hanukkah-begins",
+    "country": "US",
+    "month": 12,
+    "day": 14,
+    "name": "Hanukkah Begins",
+    "category": "religious",
+    "pod_relevance_score": 75,
+    "suggested_niches": [
+      "hanukkah",
+      "menorah",
+      "jewish holidays"
+    ]
+  },
+  {
+    "id": "us-2026-12-25-christmas-day",
+    "country": "US",
+    "month": 12,
+    "day": 25,
+    "name": "Christmas Day",
+    "category": "religious",
+    "pod_relevance_score": 100,
+    "suggested_niches": [
+      "christmas",
+      "santa",
+      "ugly sweater",
+      "merry christmas",
+      "stocking stuffer"
+    ]
+  },
+  {
+    "id": "us-2026-12-31-new-year's-eve",
+    "country": "US",
+    "month": 12,
+    "day": 31,
+    "name": "New Year's Eve",
+    "category": "holiday",
+    "pod_relevance_score": 70,
+    "suggested_niches": [
+      "new years eve",
+      "2027 here we come",
+      "nye party"
+    ]
+  },
+  {
+    "id": "us-2026-01-04-national-trivia-day",
+    "country": "US",
+    "month": 1,
+    "day": 4,
+    "name": "National Trivia Day",
+    "category": "quirky",
+    "pod_relevance_score": 50,
+    "suggested_niches": [
+      "trivia night",
+      "pub quiz",
+      "trivia master"
+    ]
+  },
+  {
+    "id": "us-2026-04-01-april-fools-day",
+    "country": "US",
+    "month": 4,
+    "day": 1,
+    "name": "April Fools Day",
+    "category": "quirky",
+    "pod_relevance_score": 50,
+    "suggested_niches": [
+      "april fools",
+      "prankster"
+    ]
+  },
+  {
+    "id": "us-2026-09-19-talk-like-a-pirate-day",
+    "country": "US",
+    "month": 9,
+    "day": 19,
+    "name": "Talk Like a Pirate Day",
+    "category": "quirky",
+    "pod_relevance_score": 55,
+    "suggested_niches": [
+      "pirate",
+      "ahoy",
+      "yarr"
+    ]
+  },
+  {
+    "id": "us-2026-10-04-national-taco-day",
+    "country": "US",
+    "month": 10,
+    "day": 4,
+    "name": "National Taco Day",
+    "category": "quirky",
+    "pod_relevance_score": 70,
+    "suggested_niches": [
+      "taco tuesday",
+      "taco lover"
+    ]
+  },
+  {
+    "id": "us-2026-10-01-breast-cancer-awareness-month",
+    "country": "US",
+    "month": 10,
+    "day": 1,
+    "name": "Breast Cancer Awareness Month",
+    "category": "awareness",
+    "pod_relevance_score": 85,
+    "suggested_niches": [
+      "breast cancer awareness",
+      "pink ribbon",
+      "fight like a girl",
+      "survivor"
+    ]
+  },
+  {
+    "id": "us-2026-11-01-movember",
+    "country": "US",
+    "month": 11,
+    "day": 1,
+    "name": "Movember",
+    "category": "awareness",
+    "pod_relevance_score": 60,
+    "suggested_niches": [
+      "movember",
+      "mens health",
+      "mustache"
+    ]
+  },
+  {
+    "id": "uk-2026-01-01-new-year's-day",
+    "country": "UK",
+    "month": 1,
+    "day": 1,
+    "name": "New Year's Day",
+    "category": "holiday",
+    "pod_relevance_score": 65,
+    "suggested_niches": [
+      "new year",
+      "2026"
+    ]
+  },
+  {
+    "id": "uk-2026-01-25-burns-night",
+    "country": "UK",
+    "month": 1,
+    "day": 25,
+    "name": "Burns Night",
+    "category": "cultural",
+    "pod_relevance_score": 65,
+    "suggested_niches": [
+      "burns night",
+      "scottish heritage",
+      "haggis"
+    ]
+  },
+  {
+    "id": "uk-2026-02-14-valentine's-day",
+    "country": "UK",
+    "month": 2,
+    "day": 14,
+    "name": "Valentine's Day",
+    "category": "cultural",
+    "pod_relevance_score": 95,
+    "suggested_niches": [
+      "valentines",
+      "love mug",
+      "couples gift"
+    ]
+  },
+  {
+    "id": "uk-2026-03-01-st-david's-day",
+    "country": "UK",
+    "month": 3,
+    "day": 1,
+    "name": "St. David's Day",
+    "category": "cultural",
+    "pod_relevance_score": 60,
+    "suggested_niches": [
+      "welsh pride",
+      "st davids day",
+      "daffodil"
+    ]
+  },
+  {
+    "id": "uk-2026-03-15-mother's-day-uk",
+    "country": "UK",
+    "month": 3,
+    "day": 15,
+    "name": "Mother's Day (UK)",
+    "category": "cultural",
+    "pod_relevance_score": 100,
+    "suggested_niches": [
+      "mum mug",
+      "best mum",
+      "mum life",
+      "mums day"
+    ]
+  },
+  {
+    "id": "uk-2026-03-17-st-patrick's-day",
+    "country": "UK",
+    "month": 3,
+    "day": 17,
+    "name": "St. Patrick's Day",
+    "category": "cultural",
+    "pod_relevance_score": 80,
+    "suggested_niches": [
+      "st patricks day",
+      "irish heritage"
+    ]
+  },
+  {
+    "id": "uk-2026-04-05-easter-sunday",
+    "country": "UK",
+    "month": 4,
+    "day": 5,
+    "name": "Easter Sunday",
+    "category": "religious",
+    "pod_relevance_score": 80,
+    "suggested_niches": [
+      "easter",
+      "spring",
+      "bunny"
+    ]
+  },
+  {
+    "id": "uk-2026-04-23-st-george's-day",
+    "country": "UK",
+    "month": 4,
+    "day": 23,
+    "name": "St. George's Day",
+    "category": "cultural",
+    "pod_relevance_score": 65,
+    "suggested_niches": [
+      "st georges day",
+      "english pride",
+      "england flag"
+    ]
+  },
+  {
+    "id": "uk-2026-05-04-may-day-bank-holiday",
+    "country": "UK",
+    "month": 5,
+    "day": 4,
+    "name": "May Day Bank Holiday",
+    "category": "holiday",
+    "pod_relevance_score": 30,
+    "suggested_niches": [
+      "may day"
+    ]
+  },
+  {
+    "id": "uk-2026-06-21-father's-day-uk",
+    "country": "UK",
+    "month": 6,
+    "day": 21,
+    "name": "Father's Day (UK)",
+    "category": "cultural",
+    "pod_relevance_score": 95,
+    "suggested_niches": [
+      "dad mug",
+      "best dad",
+      "fathers day uk"
+    ]
+  },
+  {
+    "id": "uk-2026-07-01-nhs-day",
+    "country": "UK",
+    "month": 7,
+    "day": 1,
+    "name": "NHS Day",
+    "category": "awareness",
+    "pod_relevance_score": 65,
+    "suggested_niches": [
+      "nhs",
+      "nhs hero",
+      "thank you nhs"
+    ]
+  },
+  {
+    "id": "uk-2026-09-01-back-to-school",
+    "country": "UK",
+    "month": 9,
+    "day": 1,
+    "name": "Back to School",
+    "category": "school",
+    "pod_relevance_score": 90,
+    "suggested_niches": [
+      "teacher gift",
+      "back to school",
+      "year 1 teacher"
+    ]
+  },
+  {
+    "id": "uk-2026-10-31-halloween",
+    "country": "UK",
+    "month": 10,
+    "day": 31,
+    "name": "Halloween",
+    "category": "cultural",
+    "pod_relevance_score": 90,
+    "suggested_niches": [
+      "halloween uk",
+      "spooky"
+    ]
+  },
+  {
+    "id": "uk-2026-11-05-bonfire-night-guy-fawkes",
+    "country": "UK",
+    "month": 11,
+    "day": 5,
+    "name": "Bonfire Night (Guy Fawkes)",
+    "category": "cultural",
+    "pod_relevance_score": 75,
+    "suggested_niches": [
+      "bonfire night",
+      "guy fawkes",
+      "fireworks"
+    ]
+  },
+  {
+    "id": "uk-2026-11-11-remembrance-day",
+    "country": "UK",
+    "month": 11,
+    "day": 11,
+    "name": "Remembrance Day",
+    "category": "awareness",
+    "pod_relevance_score": 80,
+    "suggested_niches": [
+      "poppy",
+      "remembrance day",
+      "lest we forget"
+    ]
+  },
+  {
+    "id": "uk-2026-12-25-christmas-day",
+    "country": "UK",
+    "month": 12,
+    "day": 25,
+    "name": "Christmas Day",
+    "category": "religious",
+    "pod_relevance_score": 100,
+    "suggested_niches": [
+      "christmas uk",
+      "merry christmas",
+      "secret santa",
+      "ugly jumper"
+    ]
+  },
+  {
+    "id": "uk-2026-12-26-boxing-day",
+    "country": "UK",
+    "month": 12,
+    "day": 26,
+    "name": "Boxing Day",
+    "category": "holiday",
+    "pod_relevance_score": 70,
+    "suggested_niches": [
+      "boxing day",
+      "after christmas"
+    ]
+  },
+  {
+    "id": "uk-2026-06-01-pride-month",
+    "country": "UK",
+    "month": 6,
+    "day": 1,
+    "name": "Pride Month",
+    "category": "awareness",
+    "pod_relevance_score": 90,
+    "suggested_niches": [
+      "pride uk",
+      "lgbtq",
+      "love is love"
+    ]
+  },
+  {
+    "id": "uk-2026-04-01-spring-term-ends",
+    "country": "UK",
+    "month": 4,
+    "day": 1,
+    "name": "Spring Term Ends",
+    "category": "school",
+    "pod_relevance_score": 60,
+    "suggested_niches": [
+      "end of term",
+      "teacher thank you",
+      "spring break"
+    ]
+  },
+  {
+    "id": "au-2026-01-01-new-year's-day",
+    "country": "AU",
+    "month": 1,
+    "day": 1,
+    "name": "New Year's Day",
+    "category": "holiday",
+    "pod_relevance_score": 65,
+    "suggested_niches": [
+      "new year",
+      "summer holidays"
+    ]
+  },
+  {
+    "id": "au-2026-01-26-australia-day",
+    "country": "AU",
+    "month": 1,
+    "day": 26,
+    "name": "Australia Day",
+    "category": "holiday",
+    "pod_relevance_score": 95,
+    "suggested_niches": [
+      "australia day",
+      "aussie pride",
+      "true blue",
+      "fair dinkum"
+    ]
+  },
+  {
+    "id": "au-2026-02-14-valentine's-day",
+    "country": "AU",
+    "month": 2,
+    "day": 14,
+    "name": "Valentine's Day",
+    "category": "cultural",
+    "pod_relevance_score": 90,
+    "suggested_niches": [
+      "valentines aus",
+      "couples gift"
+    ]
+  },
+  {
+    "id": "au-2026-03-08-international-women's-day",
+    "country": "AU",
+    "month": 3,
+    "day": 8,
+    "name": "International Women's Day",
+    "category": "awareness",
+    "pod_relevance_score": 75,
+    "suggested_niches": [
+      "women empowerment",
+      "feminist"
+    ]
+  },
+  {
+    "id": "au-2026-04-05-easter-sunday",
+    "country": "AU",
+    "month": 4,
+    "day": 5,
+    "name": "Easter Sunday",
+    "category": "religious",
+    "pod_relevance_score": 80,
+    "suggested_niches": [
+      "easter",
+      "easter bunny"
+    ]
+  },
+  {
+    "id": "au-2026-04-25-anzac-day",
+    "country": "AU",
+    "month": 4,
+    "day": 25,
+    "name": "ANZAC Day",
+    "category": "holiday",
+    "pod_relevance_score": 90,
+    "suggested_niches": [
+      "anzac day",
+      "lest we forget",
+      "rsl",
+      "war veterans"
+    ]
+  },
+  {
+    "id": "au-2026-05-10-mother's-day-au",
+    "country": "AU",
+    "month": 5,
+    "day": 10,
+    "name": "Mother's Day (AU)",
+    "category": "cultural",
+    "pod_relevance_score": 100,
+    "suggested_niches": [
+      "mum gift",
+      "mama australia",
+      "best mum"
+    ]
+  },
+  {
+    "id": "au-2026-06-08-king's-birthday",
+    "country": "AU",
+    "month": 6,
+    "day": 8,
+    "name": "King's Birthday",
+    "category": "holiday",
+    "pod_relevance_score": 30,
+    "suggested_niches": [
+      "kings birthday public holiday"
+    ]
+  },
+  {
+    "id": "au-2026-07-14-naidoc-week",
+    "country": "AU",
+    "month": 7,
+    "day": 14,
+    "name": "NAIDOC Week",
+    "category": "awareness",
+    "pod_relevance_score": 75,
+    "suggested_niches": [
+      "naidoc",
+      "indigenous australia",
+      "first nations"
+    ]
+  },
+  {
+    "id": "au-2026-09-06-father's-day-au",
+    "country": "AU",
+    "month": 9,
+    "day": 6,
+    "name": "Father's Day (AU)",
+    "category": "cultural",
+    "pod_relevance_score": 100,
+    "suggested_niches": [
+      "dad gift aus",
+      "fathers day australia"
+    ]
+  },
+  {
+    "id": "au-2026-10-31-halloween",
+    "country": "AU",
+    "month": 10,
+    "day": 31,
+    "name": "Halloween",
+    "category": "cultural",
+    "pod_relevance_score": 60,
+    "suggested_niches": [
+      "halloween aus",
+      "spooky"
+    ]
+  },
+  {
+    "id": "au-2026-11-03-melbourne-cup",
+    "country": "AU",
+    "month": 11,
+    "day": 3,
+    "name": "Melbourne Cup",
+    "category": "sports",
+    "pod_relevance_score": 80,
+    "suggested_niches": [
+      "melbourne cup",
+      "race day",
+      "fascinator",
+      "the race that stops a nation"
+    ]
+  },
+  {
+    "id": "au-2026-12-25-christmas-day",
+    "country": "AU",
+    "month": 12,
+    "day": 25,
+    "name": "Christmas Day",
+    "category": "religious",
+    "pod_relevance_score": 100,
+    "suggested_niches": [
+      "aussie christmas",
+      "summer christmas",
+      "santa beach"
+    ]
+  },
+  {
+    "id": "au-2026-12-26-boxing-day",
+    "country": "AU",
+    "month": 12,
+    "day": 26,
+    "name": "Boxing Day",
+    "category": "holiday",
+    "pod_relevance_score": 70,
+    "suggested_niches": [
+      "boxing day test",
+      "boxing day"
+    ]
+  },
+  {
+    "id": "au-2026-06-01-pride-month",
+    "country": "AU",
+    "month": 6,
+    "day": 1,
+    "name": "Pride Month",
+    "category": "awareness",
+    "pod_relevance_score": 80,
+    "suggested_niches": [
+      "pride australia",
+      "mardi gras",
+      "lgbtq"
+    ]
+  },
+  {
+    "id": "au-2026-09-01-footy-finals-season",
+    "country": "AU",
+    "month": 9,
+    "day": 1,
+    "name": "Footy Finals Season",
+    "category": "sports",
+    "pod_relevance_score": 75,
+    "suggested_niches": [
+      "afl finals",
+      "nrl finals",
+      "grand final"
+    ]
+  },
+  {
+    "id": "au-2026-08-27-daffodil-day",
+    "country": "AU",
+    "month": 8,
+    "day": 27,
+    "name": "Daffodil Day",
+    "category": "awareness",
+    "pod_relevance_score": 50,
+    "suggested_niches": [
+      "daffodil day",
+      "cancer awareness aus"
+    ]
+  },
+  {
+    "id": "ca-2026-01-01-new-year's-day",
+    "country": "CA",
+    "month": 1,
+    "day": 1,
+    "name": "New Year's Day",
+    "category": "holiday",
+    "pod_relevance_score": 65,
+    "suggested_niches": [
+      "new year canada",
+      "2026"
+    ]
+  },
+  {
+    "id": "ca-2026-02-14-valentine's-day",
+    "country": "CA",
+    "month": 2,
+    "day": 14,
+    "name": "Valentine's Day",
+    "category": "cultural",
+    "pod_relevance_score": 95,
+    "suggested_niches": [
+      "valentines canada"
+    ]
+  },
+  {
+    "id": "ca-2026-02-17-family-day",
+    "country": "CA",
+    "month": 2,
+    "day": 17,
+    "name": "Family Day",
+    "category": "holiday",
+    "pod_relevance_score": 60,
+    "suggested_niches": [
+      "family day",
+      "family time"
+    ]
+  },
+  {
+    "id": "ca-2026-03-17-st-patrick's-day",
+    "country": "CA",
+    "month": 3,
+    "day": 17,
+    "name": "St. Patrick's Day",
+    "category": "cultural",
+    "pod_relevance_score": 75,
+    "suggested_niches": [
+      "st patricks day canada",
+      "irish"
+    ]
+  },
+  {
+    "id": "ca-2026-04-05-easter-sunday",
+    "country": "CA",
+    "month": 4,
+    "day": 5,
+    "name": "Easter Sunday",
+    "category": "religious",
+    "pod_relevance_score": 80,
+    "suggested_niches": [
+      "easter canada"
+    ]
+  },
+  {
+    "id": "ca-2026-05-10-mother's-day-ca",
+    "country": "CA",
+    "month": 5,
+    "day": 10,
+    "name": "Mother's Day (CA)",
+    "category": "cultural",
+    "pod_relevance_score": 100,
+    "suggested_niches": [
+      "mom gift canada",
+      "best mom"
+    ]
+  },
+  {
+    "id": "ca-2026-05-18-victoria-day",
+    "country": "CA",
+    "month": 5,
+    "day": 18,
+    "name": "Victoria Day",
+    "category": "holiday",
+    "pod_relevance_score": 50,
+    "suggested_niches": [
+      "may two four",
+      "victoria day"
+    ]
+  },
+  {
+    "id": "ca-2026-06-21-father's-day-ca",
+    "country": "CA",
+    "month": 6,
+    "day": 21,
+    "name": "Father's Day (CA)",
+    "category": "cultural",
+    "pod_relevance_score": 95,
+    "suggested_niches": [
+      "dad gift canada"
+    ]
+  },
+  {
+    "id": "ca-2026-07-01-canada-day",
+    "country": "CA",
+    "month": 7,
+    "day": 1,
+    "name": "Canada Day",
+    "category": "holiday",
+    "pod_relevance_score": 100,
+    "suggested_niches": [
+      "canada day",
+      "true north",
+      "maple leaf",
+      "eh canada"
+    ]
+  },
+  {
+    "id": "ca-2026-08-03-civic-holiday",
+    "country": "CA",
+    "month": 8,
+    "day": 3,
+    "name": "Civic Holiday",
+    "category": "holiday",
+    "pod_relevance_score": 30,
+    "suggested_niches": [
+      "civic holiday"
+    ]
+  },
+  {
+    "id": "ca-2026-09-07-labour-day",
+    "country": "CA",
+    "month": 9,
+    "day": 7,
+    "name": "Labour Day",
+    "category": "holiday",
+    "pod_relevance_score": 50,
+    "suggested_niches": [
+      "labour day"
+    ]
+  },
+  {
+    "id": "ca-2026-09-30-truth-and-reconciliation-day",
+    "country": "CA",
+    "month": 9,
+    "day": 30,
+    "name": "Truth and Reconciliation Day",
+    "category": "awareness",
+    "pod_relevance_score": 75,
+    "suggested_niches": [
+      "orange shirt day",
+      "every child matters",
+      "truth reconciliation"
+    ]
+  },
+  {
+    "id": "ca-2026-10-12-thanksgiving-ca",
+    "country": "CA",
+    "month": 10,
+    "day": 12,
+    "name": "Thanksgiving (CA)",
+    "category": "holiday",
+    "pod_relevance_score": 90,
+    "suggested_niches": [
+      "canadian thanksgiving",
+      "thankful grateful"
+    ]
+  },
+  {
+    "id": "ca-2026-10-31-halloween",
+    "country": "CA",
+    "month": 10,
+    "day": 31,
+    "name": "Halloween",
+    "category": "cultural",
+    "pod_relevance_score": 95,
+    "suggested_niches": [
+      "halloween canada",
+      "spooky"
+    ]
+  },
+  {
+    "id": "ca-2026-11-11-remembrance-day",
+    "country": "CA",
+    "month": 11,
+    "day": 11,
+    "name": "Remembrance Day",
+    "category": "awareness",
+    "pod_relevance_score": 80,
+    "suggested_niches": [
+      "poppy",
+      "remembrance day canada",
+      "lest we forget"
+    ]
+  },
+  {
+    "id": "ca-2026-12-25-christmas-day",
+    "country": "CA",
+    "month": 12,
+    "day": 25,
+    "name": "Christmas Day",
+    "category": "religious",
+    "pod_relevance_score": 100,
+    "suggested_niches": [
+      "christmas canada",
+      "merry christmas eh"
+    ]
+  },
+  {
+    "id": "ca-2026-12-26-boxing-day",
+    "country": "CA",
+    "month": 12,
+    "day": 26,
+    "name": "Boxing Day",
+    "category": "holiday",
+    "pod_relevance_score": 70,
+    "suggested_niches": [
+      "boxing day canada"
+    ]
+  },
+  {
+    "id": "ca-2026-06-01-pride-month",
+    "country": "CA",
+    "month": 6,
+    "day": 1,
+    "name": "Pride Month",
+    "category": "awareness",
+    "pod_relevance_score": 90,
+    "suggested_niches": [
+      "pride canada",
+      "lgbtq"
+    ]
+  },
+  {
+    "id": "ca-2026-09-01-back-to-school-ca",
+    "country": "CA",
+    "month": 9,
+    "day": 1,
+    "name": "Back to School (CA)",
+    "category": "school",
+    "pod_relevance_score": 90,
+    "suggested_niches": [
+      "teacher gift canada",
+      "back to school"
+    ]
+  },
+  {
+    "id": "de-2026-01-01-neujahr-new-year",
+    "country": "DE",
+    "month": 1,
+    "day": 1,
+    "name": "Neujahr (New Year)",
+    "category": "holiday",
+    "pod_relevance_score": 65,
+    "suggested_niches": [
+      "neujahr",
+      "silvester",
+      "2026"
+    ]
+  },
+  {
+    "id": "de-2026-02-14-valentinstag",
+    "country": "DE",
+    "month": 2,
+    "day": 14,
+    "name": "Valentinstag",
+    "category": "cultural",
+    "pod_relevance_score": 85,
+    "suggested_niches": [
+      "valentinstag",
+      "liebe geschenk"
+    ]
+  },
+  {
+    "id": "de-2026-02-16-karneval---fasching",
+    "country": "DE",
+    "month": 2,
+    "day": 16,
+    "name": "Karneval / Fasching",
+    "category": "cultural",
+    "pod_relevance_score": 80,
+    "suggested_niches": [
+      "karneval",
+      "fasching",
+      "kostüm",
+      "rosenmontag"
+    ]
+  },
+  {
+    "id": "de-2026-03-08-internationaler-frauentag",
+    "country": "DE",
+    "month": 3,
+    "day": 8,
+    "name": "Internationaler Frauentag",
+    "category": "awareness",
+    "pod_relevance_score": 70,
+    "suggested_niches": [
+      "frauentag",
+      "feminist",
+      "frauen power"
+    ]
+  },
+  {
+    "id": "de-2026-04-05-ostern",
+    "country": "DE",
+    "month": 4,
+    "day": 5,
+    "name": "Ostern",
+    "category": "religious",
+    "pod_relevance_score": 85,
+    "suggested_niches": [
+      "ostern",
+      "osterhase",
+      "frühling"
+    ]
+  },
+  {
+    "id": "de-2026-05-01-tag-der-arbeit",
+    "country": "DE",
+    "month": 5,
+    "day": 1,
+    "name": "Tag der Arbeit",
+    "category": "holiday",
+    "pod_relevance_score": 40,
+    "suggested_niches": [
+      "maifeiertag",
+      "arbeiter"
+    ]
+  },
+  {
+    "id": "de-2026-05-10-muttertag",
+    "country": "DE",
+    "month": 5,
+    "day": 10,
+    "name": "Muttertag",
+    "category": "cultural",
+    "pod_relevance_score": 100,
+    "suggested_niches": [
+      "muttertag",
+      "mama geschenk",
+      "beste mama"
+    ]
+  },
+  {
+    "id": "de-2026-05-25-vatertag-christi-himmelfahrt",
+    "country": "DE",
+    "month": 5,
+    "day": 25,
+    "name": "Vatertag (Christi Himmelfahrt)",
+    "category": "cultural",
+    "pod_relevance_score": 95,
+    "suggested_niches": [
+      "vatertag",
+      "papa geschenk",
+      "bester papa"
+    ]
+  },
+  {
+    "id": "de-2026-09-20-oktoberfest-begins",
+    "country": "DE",
+    "month": 9,
+    "day": 20,
+    "name": "Oktoberfest Begins",
+    "category": "cultural",
+    "pod_relevance_score": 90,
+    "suggested_niches": [
+      "oktoberfest",
+      "lederhosen",
+      "dirndl",
+      "bayern",
+      "prost"
+    ]
+  },
+  {
+    "id": "de-2026-10-03-tag-der-deutschen-einheit",
+    "country": "DE",
+    "month": 10,
+    "day": 3,
+    "name": "Tag der Deutschen Einheit",
+    "category": "holiday",
+    "pod_relevance_score": 70,
+    "suggested_niches": [
+      "deutsche einheit",
+      "deutschland flag"
+    ]
+  },
+  {
+    "id": "de-2026-10-31-halloween---reformationstag",
+    "country": "DE",
+    "month": 10,
+    "day": 31,
+    "name": "Halloween / Reformationstag",
+    "category": "cultural",
+    "pod_relevance_score": 65,
+    "suggested_niches": [
+      "halloween deutschland",
+      "reformationstag"
+    ]
+  },
+  {
+    "id": "de-2026-11-11-st-martin",
+    "country": "DE",
+    "month": 11,
+    "day": 11,
+    "name": "St. Martin",
+    "category": "cultural",
+    "pod_relevance_score": 60,
+    "suggested_niches": [
+      "sankt martin",
+      "laternenumzug"
+    ]
+  },
+  {
+    "id": "de-2026-12-06-nikolaustag",
+    "country": "DE",
+    "month": 12,
+    "day": 6,
+    "name": "Nikolaustag",
+    "category": "cultural",
+    "pod_relevance_score": 75,
+    "suggested_niches": [
+      "nikolaus",
+      "stiefel",
+      "schokolade"
+    ]
+  },
+  {
+    "id": "de-2026-12-24-heiligabend",
+    "country": "DE",
+    "month": 12,
+    "day": 24,
+    "name": "Heiligabend",
+    "category": "religious",
+    "pod_relevance_score": 100,
+    "suggested_niches": [
+      "heiligabend",
+      "weihnachten",
+      "tannenbaum"
+    ]
+  },
+  {
+    "id": "de-2026-12-25-weihnachten",
+    "country": "DE",
+    "month": 12,
+    "day": 25,
+    "name": "Weihnachten",
+    "category": "religious",
+    "pod_relevance_score": 100,
+    "suggested_niches": [
+      "weihnachten",
+      "frohe weihnachten",
+      "weihnachtsmarkt"
+    ]
+  },
+  {
+    "id": "de-2026-12-31-silvester",
+    "country": "DE",
+    "month": 12,
+    "day": 31,
+    "name": "Silvester",
+    "category": "holiday",
+    "pod_relevance_score": 75,
+    "suggested_niches": [
+      "silvester",
+      "neujahr 2027"
+    ]
+  },
+  {
+    "id": "de-2026-06-01-pride-monat---csd",
+    "country": "DE",
+    "month": 6,
+    "day": 1,
+    "name": "Pride Monat / CSD",
+    "category": "awareness",
+    "pod_relevance_score": 85,
+    "suggested_niches": [
+      "pride deutschland",
+      "csd",
+      "regenbogen"
+    ]
+  },
+  {
+    "id": "de-2026-09-01-schulanfang",
+    "country": "DE",
+    "month": 9,
+    "day": 1,
+    "name": "Schulanfang",
+    "category": "school",
+    "pod_relevance_score": 85,
+    "suggested_niches": [
+      "schulanfang",
+      "lehrer geschenk",
+      "einschulung",
+      "schultüte"
+    ]
+  }
+]

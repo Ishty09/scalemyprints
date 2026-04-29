@@ -1,0 +1,30 @@
+# Local Supabase project configuration.
+# Generate this with `supabase init` for a real project — this file is a
+# minimal seed so the CLI knows where things live.
+
+project_id = "scalemyprints-prod"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public"]
+
+[db]
+port = 54322
+major_version = 15
+
+[studio]
+enabled = true
+port = 54323
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000/dashboard/trademark"]
+jwt_expiry = 3600
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false  # set true for production

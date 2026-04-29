@@ -1,0 +1,31 @@
+{
+  "name": "@scalemyprints/extension",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ScaleMyPrints Chrome extension — free trademark checker on listing pages",
+  "type": "module",
+  "scripts": {
+    "dev": "vite build --watch --mode development",
+    "build": "vite build",
+    "build:zip": "vite build && cd dist && zip -r ../scalemyprints-extension.zip . && cd ..",
+    "lint": "eslint src",
+    "lint:fix": "eslint --fix src",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist node_modules/.cache *.zip"
+  },
+  "dependencies": {
+    "@scalemyprints/contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "@scalemyprints/config": "workspace:*",
+    "@types/chrome": "^0.0.268",
+    "@typescript-eslint/eslint-plugin": "^7.7.0",
+    "@typescript-eslint/parser": "^7.7.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-unused-imports": "^3.1.0",
+    "typescript": "^5.4.5",
+    "vite": "^5.2.0"
+  }
+}
