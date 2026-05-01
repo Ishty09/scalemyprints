@@ -10,6 +10,8 @@ import { LOGIN_REQUEST_SCHEMA } from '@scalemyprints/contracts'
 import { Button, Card, CardContent, Input } from '@/components/ui'
 import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 
+export const dynamic = 'force-dynamic'
+
 export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
