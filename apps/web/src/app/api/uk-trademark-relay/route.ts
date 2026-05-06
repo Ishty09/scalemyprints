@@ -31,14 +31,29 @@ export async function GET(request: Request): Promise<Response> {
     return Response.json({ error: `Domain not allowed: ${hostname}` }, { status: 403 })
   }
 
+  // Build browser-like headers. For tmdn.org, mimic a same-origin XHR from
+  // the TMView portal so Akamai bot detection lets us through.
+  const browserHeaders: Record<string, string> = {
+    'User-Agent': BROWSER_UA,
+    Accept: 'application/json, text/plain, */*',
+    'Accept-Language': 'en-GB,en;q=0.9',
+    'Cache-Control': 'no-cache',
+    'Sec-Ch-Ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+    'Sec-Ch-Ua-Mobile': '?0',
+    'Sec-Ch-Ua-Platform': '"Windows"',
+    'Sec-Fetch-Dest': 'empty',
+    'Sec-Fetch-Mode': 'cors',
+    'Sec-Fetch-Site': 'same-origin',
+    'X-Requested-With': 'XMLHttpRequest',
+  }
+  if (hostname === 'www.tmdn.org' || hostname === 'tmdn.org') {
+    browserHeaders.Origin = 'https://www.tmdn.org'
+    browserHeaders.Referer = 'https://www.tmdn.org/tmview/welcome'
+  }
+
   try {
     const upstream = await fetch(target, {
-      headers: {
-        'User-Agent': BROWSER_UA,
-        Accept: 'application/json, text/plain, */*',
-        'Accept-Language': 'en-GB,en;q=0.9',
-        'Cache-Control': 'no-cache',
-      },
+      headers: browserHeaders,
       // CF Workers respect redirect by default
     })
 
