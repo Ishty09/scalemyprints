@@ -128,8 +128,9 @@ class Settings(BaseSettings):
     euipo_design_scope: str = Field(default="uid", alias="EUIPO_DESIGN_SCOPE")
     euipo_design_api_base_url: str = Field(default="https://api-sandbox.euipo.europa.eu/design-search", alias="EUIPO_DESIGN_API_BASE_URL")
 
-    # UK
+    # UK — both UKIPO and TMview block datacenter IPs; a residential proxy bypasses this
     ukipo_api_base_url: str = "https://trademarks.ipo.gov.uk"
+    uk_proxy_url: str = ""  # e.g. "http://user:pass@proxy.brightdata.com:22225"
 
     # AU
     ipau_api_base_url: str = "https://search.ipaustralia.gov.au"

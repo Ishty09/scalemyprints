@@ -203,13 +203,23 @@ class ServiceContainer:
 
     def _build_uk_client(self) -> TrademarkAPI:
         """
-        UK chain: UKIPO → TMView (if it targets UK).
+        UK chain: UKIPO → TMViewUK (first success wins, both via proxy if configured).
 
-        TMView is best-effort: chain enforces matching jurisdiction.
+        Both UKIPO and tmdn.org block datacenter IPs. Set UK_PROXY_URL to a
+        residential proxy (e.g. BrightData) to unblock both providers.
         """
+        proxy_url = self._settings.uk_proxy_url or None
+        uk_factory = (
+            HttpClientFactory(proxy_url=proxy_url)
+            if proxy_url
+            else self._http_factory
+        )
+        if proxy_url:
+            logger.info("uk_chain_using_proxy")
+
         ukipo = UKIPOClient(
             base_url=self._settings.ukipo_api_base_url,
-            http_factory=self._http_factory,
+            http_factory=uk_factory,
         )
         self._owned_trademark_clients.append(ukipo)
 
@@ -218,11 +228,11 @@ class ServiceContainer:
         try:
             tmview_uk = TMViewUKClient(
                 base_url=self._settings.tmview_api_base_url,
-                http_factory=self._http_factory,
+                http_factory=uk_factory,
             )
             if tmview_uk.jurisdiction == JurisdictionCode.UK:
                 self._owned_trademark_clients.append(tmview_uk)
-                providers.append(("tmview", tmview_uk))
+                providers.append(("tmview_uk", tmview_uk))
             else:
                 logger.debug(
                     "tmview_uk_fallback_unavailable",

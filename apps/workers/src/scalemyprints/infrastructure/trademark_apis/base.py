@@ -59,12 +59,14 @@ class HttpClientFactory:
         user_agent: str = DEFAULT_USER_AGENT,
         timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS,
         connect_timeout_seconds: float = DEFAULT_CONNECT_TIMEOUT_SECONDS,
+        proxy_url: str | None = None,
     ) -> None:
         self._user_agent = user_agent
         self._timeout = httpx.Timeout(
             timeout=timeout_seconds,
             connect=connect_timeout_seconds,
         )
+        self._proxy_url = proxy_url
 
     def build(self, base_url: str, headers: dict[str, str] | None = None) -> httpx.AsyncClient:
         """Construct a new client bound to the given base URL."""
@@ -78,6 +80,7 @@ class HttpClientFactory:
         return httpx.AsyncClient(
             base_url=base_url,
             headers=final_headers,
+            proxy=self._proxy_url,
             timeout=self._timeout,
             follow_redirects=True,
             # Conservative pool: trademark APIs have rate limits
