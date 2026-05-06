@@ -131,7 +131,7 @@ class Settings(BaseSettings):
     # UK — both UKIPO and TMview block datacenter IPs; proxy or CF Worker relay bypasses this
     ukipo_api_base_url: str = "https://trademarks.ipo.gov.uk"
     uk_proxy_url: str = ""  # e.g. "http://user:pass@proxy.brightdata.com:22225"
-    web_app_url: str = "https://app.scalemyprints.com"  # CF Worker relay host
+    web_app_url: str = "https://scalemyprints.com"  # CF Worker relay host
 
     # AU
     ipau_api_base_url: str = "https://search.ipaustralia.gov.au"
