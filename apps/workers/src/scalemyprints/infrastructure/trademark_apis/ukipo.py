@@ -133,14 +133,10 @@ class UKIPOClient:
 
         async def _do() -> httpx.Response:
             response = await self._client.get(UKIPO_SEARCH_PATH, params=params)
-            if response.status_code == 404:
-                return response
             response.raise_for_status()
             return response
 
         response = await run_with_retry(_do, service_name="ukipo", max_attempts=3)
-        if response.status_code == 404:
-            return []
 
         try:
             payload = response.json()
