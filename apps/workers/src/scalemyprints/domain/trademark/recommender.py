@@ -39,16 +39,35 @@ class RecommendationGenerator:
         # Errors first — they block other recommendations from being trusted
         for jr in jurisdiction_risks:
             if jr.error and jr.code in selling_set:
-                recommendations.append(
-                    TrademarkRecommendation(
-                        severity=RecommendationSeverity.WARNING,
-                        message=(
-                            f"We couldn't fully check {jr.code} "
-                            "(the trademark office didn't respond)."
-                        ),
-                        action="Try again in a few minutes, or search directly on the office site.",
+                if jr.error.startswith("coverage_limited"):
+                    recommendations.append(
+                        TrademarkRecommendation(
+                            severity=RecommendationSeverity.WARNING,
+                            message=(
+                                f"{jr.code} coverage is temporarily unavailable — "
+                                "we cannot guarantee no conflicts in this region."
+                            ),
+                            action=(
+                                f"Search the {jr.code} office directly before "
+                                "selling under this phrase, or come back when "
+                                "we restore full coverage."
+                            ),
+                        )
                     )
-                )
+                else:
+                    recommendations.append(
+                        TrademarkRecommendation(
+                            severity=RecommendationSeverity.WARNING,
+                            message=(
+                                f"We couldn't fully check {jr.code} "
+                                "(the trademark office didn't respond)."
+                            ),
+                            action=(
+                                "Try again in a few minutes, or search directly "
+                                "on the office site."
+                            ),
+                        )
+                    )
 
         # Critical blockers — score 70+ is a clear do-not-proceed signal
         for jr in jurisdiction_risks:

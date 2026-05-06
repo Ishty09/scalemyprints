@@ -18,6 +18,11 @@ import { Button } from '@/components/ui'
 const JURISDICTION_OPTIONS: JurisdictionCode[] = ['US', 'EU', 'UK', 'AU']
 const COMMON_NICE_CLASSES: NiceClass[] = [25, 21, 16, 28]
 
+// Jurisdictions where coverage is temporarily unavailable. Selecting these
+// surfaces a warning instead of a real result. See
+// apps/workers/.../uk_coverage_limited.py for context.
+const LIMITED_COVERAGE: ReadonlySet<JurisdictionCode> = new Set(['UK'])
+
 interface TrademarkSearchFormProps {
   onSearch: (request: TrademarkSearchRequest) => void
   isLoading: boolean
@@ -110,12 +115,23 @@ export function TrademarkSearchForm({ onSearch, isLoading }: TrademarkSearchForm
                 <ToggleChip
                   key={code}
                   label={code}
-                  ariaLabel={JURISDICTION_NAMES[code]}
+                  ariaLabel={
+                    LIMITED_COVERAGE.has(code)
+                      ? `${JURISDICTION_NAMES[code]} (coverage temporarily limited)`
+                      : JURISDICTION_NAMES[code]
+                  }
                   active={jurisdictions.includes(code)}
                   onClick={() => toggleJurisdiction(code)}
+                  badge={LIMITED_COVERAGE.has(code) ? 'limited' : undefined}
                 />
               ))}
             </div>
+            {jurisdictions.some((c) => LIMITED_COVERAGE.has(c)) && (
+              <p className="mt-2 text-xs text-warning-600">
+                UK coverage is temporarily limited. We&apos;ll restore it once
+                UKIPO ships their official API.
+              </p>
+            )}
           </fieldset>
         </div>
 
@@ -158,9 +174,10 @@ interface ToggleChipProps {
   ariaLabel: string
   active: boolean
   onClick: () => void
+  badge?: string
 }
 
-function ToggleChip({ label, ariaLabel, active, onClick }: ToggleChipProps) {
+function ToggleChip({ label, ariaLabel, active, onClick, badge }: ToggleChipProps) {
   return (
     <button
       type="button"
@@ -168,13 +185,25 @@ function ToggleChip({ label, ariaLabel, active, onClick }: ToggleChipProps) {
       aria-pressed={active}
       aria-label={ariaLabel}
       className={cn(
-        'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
+        'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
         active
           ? 'bg-primary-600 text-white'
           : 'bg-slate-100 text-slate-700 hover:bg-slate-200',
       )}
     >
       {label}
+      {badge && (
+        <span
+          className={cn(
+            'rounded px-1 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
+            active
+              ? 'bg-white/25 text-white'
+              : 'bg-warning-100 text-warning-700',
+          )}
+        >
+          {badge}
+        </span>
+      )}
     </button>
   )
 }
