@@ -70,7 +70,7 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
-        run: npx @opennextjs/cloudflare build
+        run: npx @opennextjs/cloudflare build --dangerouslyUseUnsupportedNextVersion
 
       - name: Deploy to Cloudflare Workers
         working-directory: apps/web
