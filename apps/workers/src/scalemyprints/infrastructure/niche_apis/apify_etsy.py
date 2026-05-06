@@ -63,7 +63,7 @@ class ApifyEtsyAdapter:
         api_token: str,
         actor_id: str = "epctex/etsy-scraper",
         max_items_per_search: int = 30,
-        actor_timeout_seconds: int = 180,
+        actor_timeout_seconds: int = 300,
     ) -> None:
         if not api_token:
             raise ValueError("ApifyEtsyAdapter requires a non-empty api_token")

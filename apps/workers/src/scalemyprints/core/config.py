@@ -114,6 +114,19 @@ class Settings(BaseSettings):
     eu_trademark_provider: str = "tmview"
     tmview_api_base_url: str = "https://www.tmdn.org"
     euipo_api_base_url: str = "https://euipo.europa.eu/copla"
+# EUIPO Official OAuth API — Trademark Search (sandbox by default)
+    euipo_official_enabled: bool = True
+    euipo_tm_client_id: SecretStr = Field(default=SecretStr(""), alias="EUIPO_TM_CLIENT_ID")
+    euipo_tm_client_secret: SecretStr = Field(default=SecretStr(""), alias="EUIPO_TM_CLIENT_SECRET")
+    euipo_tm_token_url: str = Field(default="https://auth-sandbox.euipo.europa.eu/oidc/accessToken", alias="EUIPO_TM_TOKEN_URL")
+    euipo_tm_scope: str = Field(default="uid", alias="EUIPO_TM_SCOPE")
+    euipo_tm_api_base_url: str = Field(default="https://api-sandbox.euipo.europa.eu/trademark-search", alias="EUIPO_TM_API_BASE_URL")
+    # Design API — credentials stored, integration later
+    euipo_design_client_id: SecretStr = Field(default=SecretStr(""), alias="EUIPO_DESIGN_CLIENT_ID")
+    euipo_design_client_secret: SecretStr = Field(default=SecretStr(""), alias="EUIPO_DESIGN_CLIENT_SECRET")
+    euipo_design_token_url: str = Field(default="https://auth-sandbox.euipo.europa.eu/oidc/accessToken", alias="EUIPO_DESIGN_TOKEN_URL")
+    euipo_design_scope: str = Field(default="uid", alias="EUIPO_DESIGN_SCOPE")
+    euipo_design_api_base_url: str = Field(default="https://api-sandbox.euipo.europa.eu/design-search", alias="EUIPO_DESIGN_API_BASE_URL")
 
     # UK
     ukipo_api_base_url: str = "https://trademarks.ipo.gov.uk"
