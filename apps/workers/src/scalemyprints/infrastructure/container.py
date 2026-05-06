@@ -52,6 +52,7 @@ from scalemyprints.infrastructure.trademark_apis.provider_chain import (
     TrademarkProviderChain,
 )
 from scalemyprints.infrastructure.trademark_apis.tmview import TMViewClient
+from scalemyprints.infrastructure.trademark_apis.tmview_uk import TMViewUKClient
 from scalemyprints.infrastructure.trademark_apis.ukipo import UKIPOClient
 from scalemyprints.infrastructure.trademark_apis.uspto import USPTOClient
 
@@ -215,7 +216,7 @@ class ServiceContainer:
         providers: list[tuple[str, TrademarkAPI]] = [("ukipo", ukipo)]
 
         try:
-            tmview_uk = TMViewClient(
+            tmview_uk = TMViewUKClient(
                 base_url=self._settings.tmview_api_base_url,
                 http_factory=self._http_factory,
             )
