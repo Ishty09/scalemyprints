@@ -184,6 +184,24 @@ class Settings(BaseSettings):
         return [origin.strip() for origin in self.worker_cors_origins.split(",") if origin.strip()]
 
     @property
+    def uk_effective_proxy_url(self) -> str:
+        """
+        Proxy URL used for UK trademark requests (UKIPO + TMview both block cloud IPs).
+
+        Priority:
+          1. UK_PROXY_URL if explicitly set (any provider)
+          2. Apify residential proxy auto-derived from APIFY_API_TOKEN
+          3. Empty string → no proxy (searches will fail from datacenter IPs)
+        """
+        if self.uk_proxy_url:
+            return self.uk_proxy_url
+        token = self.apify_api_token.get_secret_value()
+        if token:
+            # Route through UK residential IPs so UKIPO/TMview accept the connection
+            return f"http://groups-RESIDENTIAL,country-GB:{token}@proxy.apify.com:8000"
+        return ""
+
+    @property
     def is_production(self) -> bool:
         return self.environment == Environment.PRODUCTION
 

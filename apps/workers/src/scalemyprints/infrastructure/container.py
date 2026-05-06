@@ -208,7 +208,7 @@ class ServiceContainer:
         Both UKIPO and tmdn.org block datacenter IPs. Set UK_PROXY_URL to a
         residential proxy (e.g. BrightData) to unblock both providers.
         """
-        proxy_url = self._settings.uk_proxy_url or None
+        proxy_url = self._settings.uk_effective_proxy_url or None
         uk_factory = (
             HttpClientFactory(proxy_url=proxy_url)
             if proxy_url
