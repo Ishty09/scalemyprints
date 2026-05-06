@@ -128,9 +128,10 @@ class Settings(BaseSettings):
     euipo_design_scope: str = Field(default="uid", alias="EUIPO_DESIGN_SCOPE")
     euipo_design_api_base_url: str = Field(default="https://api-sandbox.euipo.europa.eu/design-search", alias="EUIPO_DESIGN_API_BASE_URL")
 
-    # UK — both UKIPO and TMview block datacenter IPs; a residential proxy bypasses this
+    # UK — both UKIPO and TMview block datacenter IPs; proxy or CF Worker relay bypasses this
     ukipo_api_base_url: str = "https://trademarks.ipo.gov.uk"
     uk_proxy_url: str = ""  # e.g. "http://user:pass@proxy.brightdata.com:22225"
+    web_app_url: str = "https://app.scalemyprints.com"  # CF Worker relay host
 
     # AU
     ipau_api_base_url: str = "https://search.ipaustralia.gov.au"
@@ -186,19 +187,28 @@ class Settings(BaseSettings):
     @property
     def uk_effective_proxy_url(self) -> str:
         """
-        Proxy URL used for UK trademark requests (UKIPO + TMview both block cloud IPs).
+        Proxy URL for UK trademark requests.
 
         Priority:
-          1. UK_PROXY_URL if explicitly set (any provider)
-          2. Apify residential proxy auto-derived from APIFY_API_TOKEN
-          3. Empty string → no proxy (searches will fail from datacenter IPs)
+          1. UK_PROXY_URL (explicit — any residential proxy provider)
+          2. Apify residential proxy via APIFY_API_TOKEN (needs proxy password, not API token)
+          3. Empty → fall through to CF Worker relay or direct (which will fail)
         """
         if self.uk_proxy_url:
             return self.uk_proxy_url
-        token = self.apify_api_token.get_secret_value()
-        if token:
-            # Route through UK residential IPs so UKIPO/TMview accept the connection
-            return f"http://groups-RESIDENTIAL,country-GB:{token}@proxy.apify.com:8000"
+        return ""
+
+    @property
+    def uk_relay_url(self) -> str:
+        """
+        Cloudflare Worker relay URL for UK trademark requests.
+
+        Used when no proxy is configured. The relay issues fetch() from CF's
+        network, bypassing datacenter IP blocks on UKIPO/TMview.
+        Requires INTERNAL_API_SECRET to be set (used as the relay auth header).
+        """
+        if self.internal_api_secret.get_secret_value():
+            return f"{self.web_app_url.rstrip('/')}/api/uk-trademark-relay"
         return ""
 
     @property

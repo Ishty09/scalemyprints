@@ -12,6 +12,7 @@ All adapters use these primitives — never create raw httpx clients.
 from __future__ import annotations
 
 import time
+import urllib.parse
 from collections.abc import Callable, Coroutine
 from contextlib import asynccontextmanager
 from typing import Any, TypeVar
@@ -45,6 +46,35 @@ RETRYABLE_EXCEPTIONS: tuple[type[BaseException], ...] = (
 )
 
 
+class _RelayTransport(httpx.AsyncBaseTransport):
+    """
+    Routes all HTTP requests through a Cloudflare Worker relay endpoint.
+
+    The relay (apps/web/api/uk-trademark-relay) re-issues the fetch() from
+    Cloudflare's IP space, bypassing datacenter IP blocks on UKIPO/TMview.
+
+    The relay URL receives:  GET {relay}?url={encoded_target_url}
+    Header:                  x-relay-secret: {secret}
+    """
+
+    def __init__(self, relay_url: str, relay_secret: str) -> None:
+        self._relay_url = relay_url.rstrip("/")
+        self._relay_secret = relay_secret
+        self._inner = httpx.AsyncHTTPTransport()
+
+    async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
+        target = str(request.url)
+        relay_request = httpx.Request(
+            "GET",
+            f"{self._relay_url}?url={urllib.parse.quote(target, safe='')}",
+            headers={"x-relay-secret": self._relay_secret},
+        )
+        return await self._inner.handle_async_request(relay_request)
+
+    async def aclose(self) -> None:
+        await self._inner.aclose()
+
+
 class HttpClientFactory:
     """
     Builds pre-configured httpx.AsyncClient instances.
@@ -60,6 +90,8 @@ class HttpClientFactory:
         timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS,
         connect_timeout_seconds: float = DEFAULT_CONNECT_TIMEOUT_SECONDS,
         proxy_url: str | None = None,
+        relay_url: str | None = None,
+        relay_secret: str = "",
     ) -> None:
         self._user_agent = user_agent
         self._timeout = httpx.Timeout(
@@ -67,6 +99,8 @@ class HttpClientFactory:
             connect=connect_timeout_seconds,
         )
         self._proxy_url = proxy_url
+        self._relay_url = relay_url
+        self._relay_secret = relay_secret
 
     def build(self, base_url: str, headers: dict[str, str] | None = None) -> httpx.AsyncClient:
         """Construct a new client bound to the given base URL."""
@@ -77,10 +111,18 @@ class HttpClientFactory:
         if headers:
             final_headers.update(headers)
 
+        # relay_url takes priority over proxy_url (can't use both simultaneously)
+        transport: httpx.AsyncBaseTransport | None = None
+        proxy: str | None = self._proxy_url
+        if self._relay_url:
+            transport = _RelayTransport(self._relay_url, self._relay_secret)
+            proxy = None
+
         return httpx.AsyncClient(
             base_url=base_url,
             headers=final_headers,
-            proxy=self._proxy_url,
+            proxy=proxy,
+            transport=transport,
             timeout=self._timeout,
             follow_redirects=True,
             # Conservative pool: trademark APIs have rate limits

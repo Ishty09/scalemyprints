@@ -209,13 +209,18 @@ class ServiceContainer:
         residential proxy (e.g. BrightData) to unblock both providers.
         """
         proxy_url = self._settings.uk_effective_proxy_url or None
-        uk_factory = (
-            HttpClientFactory(proxy_url=proxy_url)
-            if proxy_url
-            else self._http_factory
-        )
+        relay_url = self._settings.uk_relay_url or None
+
         if proxy_url:
+            uk_factory = HttpClientFactory(proxy_url=proxy_url)
             logger.info("uk_chain_using_proxy")
+        elif relay_url:
+            relay_secret = self._settings.internal_api_secret.get_secret_value()
+            uk_factory = HttpClientFactory(relay_url=relay_url, relay_secret=relay_secret)
+            logger.info("uk_chain_using_cf_worker_relay", relay=relay_url)
+        else:
+            uk_factory = self._http_factory
+            logger.warning("uk_chain_no_bypass_configured_searches_will_fail")
 
         ukipo = UKIPOClient(
             base_url=self._settings.ukipo_api_base_url,
