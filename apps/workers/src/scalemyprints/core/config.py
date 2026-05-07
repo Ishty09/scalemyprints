@@ -151,6 +151,12 @@ class Settings(BaseSettings):
     apify_etsy_actor_id: str = "epctex/etsy-scraper"
     calendarific_api_key: SecretStr = Field(default=SecretStr(""))
 
+    # eBay Browse API — free 5k/day, OAuth2 client-credentials
+    # Sign up: https://developer.ebay.com → Create App → copy App ID + Cert ID
+    ebay_app_id: SecretStr = Field(default=SecretStr(""))
+    ebay_cert_id: SecretStr = Field(default=SecretStr(""))
+    ebay_environment: Literal["production", "sandbox"] = "production"
+
     # ---------------- Email ----------------
     resend_api_key: SecretStr = Field(default=SecretStr(""))
     resend_from_email: str = "hello@scalemyprints.com"

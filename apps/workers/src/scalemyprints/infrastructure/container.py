@@ -37,8 +37,12 @@ from scalemyprints.infrastructure.cache.niche_memory import NicheMemoryCache
 from scalemyprints.infrastructure.common_law.no_op import NoOpCommonLawChecker
 from scalemyprints.infrastructure.llm.niche_expander import OpenAINicheExpander
 from scalemyprints.infrastructure.niche_apis.apify_etsy import ApifyEtsyAdapter
+from scalemyprints.infrastructure.niche_apis.ebay_browse import EbayBrowseAdapter
 from scalemyprints.infrastructure.niche_apis.etsy_public import EtsyPublicSearchAdapter
 from scalemyprints.infrastructure.niche_apis.google_trends import GoogleTrendsAdapter
+from scalemyprints.infrastructure.niche_apis.marketplace_chain import (
+    MarketplaceProviderChain,
+)
 from scalemyprints.infrastructure.niche_apis.static_events import StaticEventsProvider
 from scalemyprints.infrastructure.niche_apis.trends_chain import TrendsProviderChain
 from scalemyprints.infrastructure.niche_apis.wikipedia_trends import (
@@ -288,26 +292,63 @@ class ServiceContainer:
         )
 
     def _build_niche_marketplace(self) -> MarketplaceProvider:
+        """
+        Marketplace chain — first-success-wins:
+          1. eBay Browse API (free OAuth, 5k/day) — usually works
+          2. Apify Etsy (paid actor, only if NICHE_MARKETPLACE_PROVIDER=apify
+             AND a fresh token; user's free trial expires after 7 days)
+          3. Etsy public scrape (Etsy 403/CAPTCHA-blocks datacenter IPs;
+             rarely succeeds without a residential proxy, kept as last try)
+
+        Order rationale: eBay first because it's reliable; Apify second
+        because user explicitly opted in (and may be paying); Etsy public
+        last because it almost never works server-side in 2026.
+        """
+        providers: list[tuple[str, MarketplaceProvider]] = []
+
+        # 1. eBay Browse — only if credentials configured
+        ebay_app = self._settings.ebay_app_id.get_secret_value()
+        ebay_cert = self._settings.ebay_cert_id.get_secret_value()
+        if ebay_app and ebay_cert:
+            try:
+                ebay = EbayBrowseAdapter(
+                    app_id=ebay_app,
+                    cert_id=ebay_cert,
+                    environment=self._settings.ebay_environment,
+                    http_factory=self._http_factory,
+                )
+                providers.append(("ebay_browse", ebay))
+                logger.info("marketplace_provider_ebay_configured")
+            except Exception as e:  # noqa: BLE001
+                logger.warning("ebay_browse_init_failed", error=str(e))
+        else:
+            logger.info("ebay_browse_skipped_no_credentials")
+
+        # 2. Apify Etsy — only when explicitly configured
         provider = self._settings.niche_marketplace_provider.lower()
         apify_token = self._settings.apify_api_token.get_secret_value()
+        if provider == "apify" and apify_token:
+            providers.append((
+                "apify_etsy",
+                ApifyEtsyAdapter(
+                    api_token=apify_token,
+                    actor_id=self._settings.apify_etsy_actor_id,
+                ),
+            ))
+            logger.info("marketplace_provider_apify_configured")
 
-        if provider == "apify":
-            if not apify_token:
-                logger.warning(
-                    "apify_provider_selected_but_token_missing",
-                    fallback="etsy_public",
-                )
-                return EtsyPublicSearchAdapter(http_factory=self._http_factory)
-            logger.info(
-                "marketplace_provider_apify",
-                actor=self._settings.apify_etsy_actor_id,
-            )
-            return ApifyEtsyAdapter(
-                api_token=apify_token,
-                actor_id=self._settings.apify_etsy_actor_id,
-            )
+        # 3. Etsy public scrape — last try (now uses curl_cffi browser
+        # impersonation; might pass when Etsy temporarily relaxes filters).
+        providers.append((
+            "etsy_public",
+            EtsyPublicSearchAdapter(http_factory=self._http_factory),
+        ))
 
-        return EtsyPublicSearchAdapter(http_factory=self._http_factory)
+        if len(providers) == 1:
+            # Only Etsy public — no chain needed.
+            return providers[0][1]
+
+        return MarketplaceProviderChain(providers=providers)
 
     def _build_niche_events(self) -> EventsProvider:
         provider = self._settings.niche_events_provider.lower()
