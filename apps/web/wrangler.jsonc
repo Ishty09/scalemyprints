@@ -8,4 +8,8 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   }
+  // Phase 3 (Browser Rendering) — adds the binding below once Workers
+  // Paid plan is active. Used by /api/browser-fetch to solve Akamai
+  // and Turnstile JS challenges on TMView, UKIPO, Etsy.
+  // "browser": { "binding": "MYBROWSER" }
 }
