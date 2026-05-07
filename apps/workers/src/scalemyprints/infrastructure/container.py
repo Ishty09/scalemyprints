@@ -40,6 +40,10 @@ from scalemyprints.infrastructure.niche_apis.apify_etsy import ApifyEtsyAdapter
 from scalemyprints.infrastructure.niche_apis.etsy_public import EtsyPublicSearchAdapter
 from scalemyprints.infrastructure.niche_apis.google_trends import GoogleTrendsAdapter
 from scalemyprints.infrastructure.niche_apis.static_events import StaticEventsProvider
+from scalemyprints.infrastructure.niche_apis.trends_chain import TrendsProviderChain
+from scalemyprints.infrastructure.niche_apis.wikipedia_trends import (
+    WikipediaTrendsAdapter,
+)
 from scalemyprints.infrastructure.trademark_apis.base import HttpClientFactory
 from scalemyprints.infrastructure.trademark_apis.euipo import EUIPOClient
 from scalemyprints.infrastructure.trademark_apis.euipo_official import (
@@ -265,7 +269,23 @@ class ServiceContainer:
         return NoOpCommonLawChecker()
 
     def _build_niche_trends(self) -> TrendsProvider:
-        return GoogleTrendsAdapter()
+        """
+        Trends chain: Wikipedia (primary, reliable from datacenter) →
+        Google Trends (richer signal when not 429-blocked).
+
+        Wikipedia Pageviews API is the only public free trends-style
+        signal that consistently works from datacenter IPs in 2026.
+        Google Trends is kept in the chain for the rare case it
+        returns data — the chain skips it on 429.
+        """
+        wikipedia = WikipediaTrendsAdapter(http_factory=self._http_factory)
+        google = GoogleTrendsAdapter()
+        return TrendsProviderChain(
+            providers=[
+                ("wikipedia", wikipedia),
+                ("google_trends", google),
+            ],
+        )
 
     def _build_niche_marketplace(self) -> MarketplaceProvider:
         provider = self._settings.niche_marketplace_provider.lower()
@@ -382,7 +402,7 @@ class ServiceContainer:
                         "trademark_adapter_close_failed",
                         adapter=type(adapter).__name__,
                     )
-        for client in (self._niche_marketplace,):
+        for client in (self._niche_marketplace, self._niche_trends):
             close_method = getattr(client, "aclose", None)
             if close_method:
                 try:
