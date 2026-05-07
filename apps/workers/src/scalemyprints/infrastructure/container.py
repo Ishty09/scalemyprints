@@ -53,9 +53,6 @@ from scalemyprints.infrastructure.trademark_apis.provider_chain import (
 )
 from scalemyprints.infrastructure.trademark_apis.tmview import TMViewClient
 from scalemyprints.infrastructure.trademark_apis.tmview_uk import TMViewUKClient
-from scalemyprints.infrastructure.trademark_apis.uk_coverage_limited import (
-    UKCoverageLimitedAdapter,
-)
 from scalemyprints.infrastructure.trademark_apis.ukipo import UKIPOClient
 from scalemyprints.infrastructure.trademark_apis.uspto import USPTOClient
 
@@ -206,31 +203,25 @@ class ServiceContainer:
 
     def _build_uk_client(self) -> TrademarkAPI:
         """
-        UK chain: UKIPO → TMViewUK (first success wins, both via proxy if configured).
+        UK chain: UKIPO → TMViewUK (first success wins).
 
-        Both UKIPO (Cloudflare WAF) and tmdn.org (Akamai bot detection) block
-        datacenter IPs. The CF Worker relay also gets blocked because Akamai
-        recognizes the CF egress IPs.
+        Both UKIPO (Cloudflare WAF) and tmdn.org (Akamai) block datacenter
+        IPs based primarily on TLS JA3 fingerprint. UKIPOClient and
+        TMViewUKClient now use curl_cffi to mimic real Chrome's handshake,
+        which bypasses fingerprint-based detection. If the upstream STILL
+        blocks (e.g. UKIPO's Cloudflare WAF on pure ASN), the chain falls
+        through to the coverage-limited stub.
 
-        Without a residential proxy, return a coverage-limited stub instead
-        of running a chain that will silently return zero results — this lets
-        the UI show an honest "UK coverage temporarily unavailable" notice
-        rather than a misleading "all clear".
-
-        To enable real UK searches, set UK_PROXY_URL to a residential proxy
-        (e.g. BrightData, Webshare).
+        Set UK_PROXY_URL to layer in residential IPs as well.
         """
         proxy_url = self._settings.uk_effective_proxy_url or None
 
-        if not proxy_url:
-            logger.info("uk_chain_using_coverage_limited_stub")
-            self._uk_provider_name = "coverage_limited"
-            stub = UKCoverageLimitedAdapter()
-            self._owned_trademark_clients.append(stub)
-            return stub
-
-        uk_factory = HttpClientFactory(proxy_url=proxy_url)
-        logger.info("uk_chain_using_proxy")
+        if proxy_url:
+            uk_factory = HttpClientFactory(proxy_url=proxy_url)
+            logger.info("uk_chain_using_proxy_plus_browser_impersonation")
+        else:
+            uk_factory = HttpClientFactory()
+            logger.info("uk_chain_using_browser_impersonation_only")
 
         ukipo = UKIPOClient(
             base_url=self._settings.ukipo_api_base_url,

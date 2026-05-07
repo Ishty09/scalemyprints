@@ -70,15 +70,19 @@ class TMViewUKClient:
             self._owns_client = False
         else:
             factory = http_factory or HttpClientFactory()
-            self._client = factory.build(
+            # tmdn.org sits behind Akamai Bot Manager. build_browser uses
+            # curl_cffi for a real-Chrome TLS fingerprint, which Akamai's
+            # JA3-based bot detection cannot distinguish from a real browser.
+            self._client = factory.build_browser(
                 base_url=self._base_url,
                 headers={
-                    "User-Agent": (
-                        "Mozilla/5.0 (compatible; ScaleMyPrints/0.1; "
-                        "+https://scalemyprints.com)"
-                    ),
-                    "Accept": "application/json",
+                    "Accept": "application/json, text/plain, */*",
+                    "Accept-Language": "en-GB,en;q=0.9",
+                    "Origin": "https://www.tmdn.org",
+                    "Referer": "https://www.tmdn.org/tmview/welcome",
+                    "X-Requested-With": "XMLHttpRequest",
                 },
+                impersonate="chrome124",
             )
             self._owns_client = True
 

@@ -63,10 +63,17 @@ class UKIPOClient:
             self._owns_client = False
         else:
             factory = http_factory or HttpClientFactory()
-            # UKIPO sometimes blocks non-browser User-Agents
-            self._client = factory.build(
+            # UKIPO sits behind Cloudflare WAF that blocks datacenter IPs
+            # *and* non-browser TLS fingerprints. build_browser uses
+            # curl_cffi for real-Chrome TLS handshake to bypass JA3 detection.
+            # IP block still applies — combine with proxy if available.
+            self._client = factory.build_browser(
                 base_url=self._base_url,
-                headers={"User-Agent": "Mozilla/5.0 (compatible; ScaleMyPrints/0.1)"},
+                headers={
+                    "Accept": "application/json, text/plain, */*",
+                    "Accept-Language": "en-GB,en;q=0.9",
+                },
+                impersonate="chrome124",
             )
             self._owns_client = True
 

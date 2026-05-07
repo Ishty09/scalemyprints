@@ -98,6 +98,7 @@ class HttpClientFactory:
             timeout=timeout_seconds,
             connect=connect_timeout_seconds,
         )
+        self._timeout_seconds = timeout_seconds
         self._proxy_url = proxy_url
         self._relay_url = relay_url
         self._relay_secret = relay_secret
@@ -128,6 +129,123 @@ class HttpClientFactory:
             # Conservative pool: trademark APIs have rate limits
             limits=httpx.Limits(max_connections=10, max_keepalive_connections=5),
         )
+
+    def build_browser(
+        self,
+        base_url: str,
+        headers: dict[str, str] | None = None,
+        *,
+        impersonate: str = "chrome124",
+    ) -> "BrowserAsyncClient":
+        """
+        Build a TLS-fingerprint-spoofing client (curl_cffi-based).
+
+        Mimics a real Chrome/Edge/Safari TLS handshake — bypasses anti-bot
+        systems that rely on JA3 fingerprinting (Akamai, DataDome, PerimeterX,
+        Cloudflare bot management). Use this for endpoints that block
+        datacenter IPs purely on TLS fingerprint:
+
+        - tmdn.org (TMView Akamai challenge)
+        - www.etsy.com (Etsy 403/429)
+
+        Note: this does NOT change the egress IP — if the block is purely
+        IP-based (e.g., Cloudflare WAF on UKIPO), use a residential proxy.
+        """
+        return BrowserAsyncClient(
+            base_url=base_url,
+            headers={
+                "User-Agent": self._user_agent,
+                "Accept": "application/json, text/plain, */*",
+                **(headers or {}),
+            },
+            timeout_seconds=self._timeout_seconds,
+            impersonate=impersonate,
+            proxy_url=self._proxy_url,
+        )
+
+
+# -----------------------------------------------------------------------------
+# Browser-impersonating async client (curl_cffi wrapper)
+# -----------------------------------------------------------------------------
+
+
+class BrowserAsyncClient:
+    """
+    httpx.AsyncClient-compatible client backed by curl_cffi.
+
+    Sends TLS handshakes indistinguishable from a real Chrome browser.
+    Drop-in replacement for httpx.AsyncClient where adapters use
+    `.get(path, params=...)`, `.post(path, json=...)`, `response.text`,
+    `response.json()`, `response.status_code`, `response.raise_for_status()`,
+    and `.aclose()`.
+    """
+
+    def __init__(
+        self,
+        *,
+        base_url: str,
+        headers: dict[str, str] | None = None,
+        timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS,
+        impersonate: str = "chrome124",
+        proxy_url: str | None = None,
+    ) -> None:
+        # Imported lazily so tests/imports don't require the binary wheels.
+        from curl_cffi.requests import AsyncSession
+
+        self._base_url = base_url.rstrip("/")
+        self._default_headers = dict(headers or {})
+        self._timeout = timeout_seconds
+        self._session = AsyncSession(
+            impersonate=impersonate,
+            timeout=timeout_seconds,
+            proxies={"http": proxy_url, "https": proxy_url} if proxy_url else None,
+        )
+
+    def _full_url(self, path: str) -> str:
+        if path.startswith(("http://", "https://")):
+            return path
+        if not self._base_url:
+            return path
+        return f"{self._base_url}/{path.lstrip('/')}"
+
+    async def get(
+        self,
+        path: str,
+        *,
+        params: Any = None,
+        headers: dict[str, str] | None = None,
+        timeout: float | None = None,
+    ) -> Any:
+        merged = {**self._default_headers, **(headers or {})}
+        return await self._session.get(
+            self._full_url(path),
+            params=params,
+            headers=merged,
+            timeout=timeout if timeout is not None else self._timeout,
+        )
+
+    async def post(
+        self,
+        path: str,
+        *,
+        params: Any = None,
+        headers: dict[str, str] | None = None,
+        json: Any = None,
+        data: Any = None,
+        timeout: float | None = None,
+    ) -> Any:
+        merged = {**self._default_headers, **(headers or {})}
+        return await self._session.post(
+            self._full_url(path),
+            params=params,
+            headers=merged,
+            json=json,
+            data=data,
+            timeout=timeout if timeout is not None else self._timeout,
+        )
+
+    async def aclose(self) -> None:
+        await self._session.close()
 
 
 # -----------------------------------------------------------------------------

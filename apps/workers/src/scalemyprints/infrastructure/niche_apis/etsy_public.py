@@ -78,13 +78,16 @@ class EtsyPublicSearchAdapter:
             self._owns_client = False
         else:
             factory = http_factory or HttpClientFactory()
-            self._client = factory.build(
+            # Etsy 403/429s datacenter IPs based on TLS JA3 fingerprint.
+            # build_browser uses curl_cffi to mimic real Chrome's TLS handshake,
+            # which dramatically reduces block rate.
+            self._client = factory.build_browser(
                 base_url="https://www.etsy.com",
                 headers={
-                    "User-Agent": USER_AGENT,
                     "Accept": "text/html,application/xhtml+xml",
                     "Accept-Language": "en-US,en;q=0.9",
                 },
+                impersonate="chrome124",
             )
             self._owns_client = True
         self._timeout = request_timeout_seconds
