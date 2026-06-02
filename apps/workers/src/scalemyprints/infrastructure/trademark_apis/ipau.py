@@ -64,7 +64,7 @@ class IPAustraliaClient:
             self._client = factory.build(base_url=self._base_url)
             self._owns_client = True
 
-    async def __aenter__(self) -> "IPAustraliaClient":
+    async def __aenter__(self) -> IPAustraliaClient:
         return self
 
     async def __aexit__(
@@ -109,7 +109,7 @@ class IPAustraliaClient:
                     duration_ms=elapsed(),
                     error=f"http_{e.response.status_code}",
                 )
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 log.exception("ipau_search_unexpected_error")
                 return TrademarkSearchResult(
                     jurisdiction=self.jurisdiction,

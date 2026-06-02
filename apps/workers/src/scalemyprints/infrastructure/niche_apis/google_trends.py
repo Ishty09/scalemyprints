@@ -75,7 +75,7 @@ class GoogleTrendsAdapter:
                 duration_ms=duration_ms,
                 error=None,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             duration_ms = int((time.monotonic() - start) * 1000)
             log.warning("trends_timeout", duration_ms=duration_ms)
             return TrendsData(
@@ -83,7 +83,7 @@ class GoogleTrendsAdapter:
                 duration_ms=duration_ms,
                 error="timeout",
             )
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             duration_ms = int((time.monotonic() - start) * 1000)
             log.warning("trends_error", error=str(e)[:120], duration_ms=duration_ms)
             return TrendsData(
@@ -141,7 +141,7 @@ class GoogleTrendsAdapter:
             top_df = rq.get(keyword, {}).get("top")
             if top_df is not None and not top_df.empty:
                 related = top_df["query"].head(10).tolist()
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass  # related queries optional
 
         return {

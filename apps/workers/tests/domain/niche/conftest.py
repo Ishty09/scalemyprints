@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 import pytest
 
@@ -109,7 +109,7 @@ def sample_niche_record(
         related_keywords=["dog mama", "rescue mom"],
         sample_listings_urls=[],
         upcoming_events=[],
-        analyzed_at=datetime.now(timezone.utc),
+        analyzed_at=datetime.now(UTC),
         duration_ms=1234,
         data_sources_used=["trends:ok", "marketplace:ok"],
         degraded=False,

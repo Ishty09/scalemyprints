@@ -71,7 +71,7 @@ class USPTOClient:
             self._client = factory.build(base_url=self._base_url)
             self._owns_client = True
 
-    async def __aenter__(self) -> "USPTOClient":
+    async def __aenter__(self) -> USPTOClient:
         return self
 
     async def __aexit__(
@@ -137,7 +137,7 @@ class USPTOClient:
                     duration_ms=elapsed(),
                     error=None,
                 )
-            except Exception as e:  # noqa: BLE001 — port contract: never raise
+            except Exception as e:
                 log.exception("uspto_search_unexpected_error")
                 return TrademarkSearchResult(
                     jurisdiction=self.jurisdiction,

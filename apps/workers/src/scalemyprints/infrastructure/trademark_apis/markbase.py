@@ -80,7 +80,7 @@ class MarkbaseClient:
             self._client = factory.build(base_url=self._base_url)
             self._owns_client = True
 
-    async def __aenter__(self) -> "MarkbaseClient":
+    async def __aenter__(self) -> MarkbaseClient:
         return self
 
     async def __aexit__(
@@ -151,7 +151,7 @@ class MarkbaseClient:
                     duration_ms=elapsed(),
                     error=None,
                 )
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 log.exception("markbase_search_unexpected_error")
                 return TrademarkSearchResult(
                     jurisdiction=self.jurisdiction,

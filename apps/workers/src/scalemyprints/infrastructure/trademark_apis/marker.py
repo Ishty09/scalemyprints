@@ -21,7 +21,6 @@ Implements TrademarkAPI protocol — drop-in replacement for USPTOClient.
 
 from __future__ import annotations
 
-import asyncio
 from types import TracebackType
 from typing import Any
 from urllib.parse import quote_plus
@@ -87,7 +86,7 @@ class MarkerAPIClient:
             self._client = factory.build(base_url=self._base_url)
             self._owns_client = True
 
-    async def __aenter__(self) -> "MarkerAPIClient":
+    async def __aenter__(self) -> MarkerAPIClient:
         return self
 
     async def __aexit__(
@@ -144,7 +143,7 @@ class MarkerAPIClient:
                     duration_ms=elapsed(),
                     error=code,
                 )
-            except Exception as e:  # noqa: BLE001 — port contract: never raise
+            except Exception as e:
                 log.exception("marker_search_unexpected_error")
                 return TrademarkSearchResult(
                     jurisdiction=self.jurisdiction,

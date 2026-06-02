@@ -38,7 +38,6 @@ from scalemyprints.domain.niche.models import (
     TrendSignal,
 )
 
-
 # Default weights — sum must equal 1.0
 DEFAULT_WEIGHTS = {
     "demand": 0.35,
@@ -143,7 +142,7 @@ def build_trend_score(
         score = 60 + int((g - 10) * 0.75)  # 10→60, 50→90
         direction = TrendDirection.RISING
     elif g >= -10:
-        score = 40 + int((g + 10))  # -10→40, +10→60
+        score = 40 + int(g + 10)  # -10→40, +10→60
         direction = TrendDirection.STABLE
     elif g >= -50:
         score = max(10, 40 + int((g + 10) * 0.75))  # -10→40, -50→10

@@ -22,7 +22,6 @@ from scalemyprints.domain.trademark.search_service import (
 )
 from tests.fixtures import make_record
 
-
 # -----------------------------------------------------------------------------
 # In-memory fakes
 # -----------------------------------------------------------------------------

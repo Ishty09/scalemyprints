@@ -102,7 +102,7 @@ class EbayBrowseAdapter:
         self._token_expires_at: float = 0.0
         self._token_lock = asyncio.Lock()
 
-    async def __aenter__(self) -> "EbayBrowseAdapter":
+    async def __aenter__(self) -> EbayBrowseAdapter:
         return self
 
     async def __aexit__(
@@ -191,7 +191,7 @@ class EbayBrowseAdapter:
                 error=None,
             )
 
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             duration_ms = int((time.monotonic() - start) * 1000)
             log.warning(
                 "ebay_search_error",

@@ -71,7 +71,7 @@ class JWKSClient:
         # Fast path: cached and not expired
         cached = await self._get_cached()
         try:
-            return cached.from_jwk(kid)
+            return cached[kid]
         except (KeyError, AttributeError):
             pass  # try fresh fetch
 
@@ -79,7 +79,7 @@ class JWKSClient:
         logger.info("jwks_force_refresh", kid=kid, url=self._jwks_url)
         fresh = await self._refresh()
         try:
-            return fresh.from_jwk(kid)
+            return fresh[kid]
         except (KeyError, AttributeError) as e:
             raise KeyError(f"No signing key found for kid={kid}") from e
 

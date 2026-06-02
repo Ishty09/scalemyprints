@@ -18,7 +18,6 @@ from scalemyprints.infrastructure.niche_apis.apify_etsy import (
     _parse_apify_items,
 )
 
-
 # =============================================================================
 # Construction & validation
 # =============================================================================

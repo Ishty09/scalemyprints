@@ -136,7 +136,7 @@ class OpenAINicheExpander:
                 duration_ms=duration_ms,
                 error="invalid_json_response",
             )
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             duration_ms = int((time.monotonic() - start) * 1000)
             log.warning("niche_expansion_error", error=str(e)[:120])
             return NicheExpansionResult(

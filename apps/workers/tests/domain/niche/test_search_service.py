@@ -15,7 +15,6 @@ from scalemyprints.domain.niche.ports import (
 from scalemyprints.domain.niche.search_service import NicheSearchService
 from scalemyprints.infrastructure.cache.niche_memory import NicheMemoryCache
 
-
 # -----------------------------------------------------------------------------
 # Stub providers for isolated unit testing
 # -----------------------------------------------------------------------------

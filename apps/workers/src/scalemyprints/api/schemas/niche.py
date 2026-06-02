@@ -13,7 +13,6 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from scalemyprints.domain.niche.enums import Country, EventCategory
 
-
 # -----------------------------------------------------------------------------
 # Search
 # -----------------------------------------------------------------------------

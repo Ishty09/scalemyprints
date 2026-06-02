@@ -13,11 +13,11 @@ from __future__ import annotations
 
 import asyncio
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from scalemyprints.core.logging import get_logger
 from scalemyprints.domain.niche.enums import Country
-from scalemyprints.domain.niche.models import Event, NicheRecord
+from scalemyprints.domain.niche.models import NicheRecord
 from scalemyprints.domain.niche.ports import (
     EventsProvider,
     MarketplaceProvider,
@@ -74,13 +74,13 @@ class NicheSearchService:
             if cached:
                 log.info("niche_cache_hit")
                 return NicheRecord.model_validate(cached)
-        except Exception:  # noqa: BLE001
+        except Exception:
             log.warning("niche_cache_lookup_failed")
 
         log.info("niche_analyze_start")
 
         # Run providers in parallel
-        as_of_date = datetime.now(timezone.utc).date()
+        as_of_date = datetime.now(UTC).date()
         trends_task = self._trends.fetch(keyword_clean, country)
         marketplace_task = self._marketplace.fetch(keyword_clean, country)
         nearest_event_task = self._events.find_nearest_event(country, keyword_clean, as_of_date)
@@ -165,7 +165,7 @@ class NicheSearchService:
             related_keywords=trends.related_queries[:10],
             sample_listings_urls=marketplace.sample_listings_urls[:5],
             upcoming_events=relevant_upcoming,
-            analyzed_at=datetime.now(timezone.utc),
+            analyzed_at=datetime.now(UTC),
             duration_ms=duration_ms,
             data_sources_used=sources_used,
             degraded=degraded,
@@ -182,7 +182,7 @@ class NicheSearchService:
         # Cache the result (best effort)
         try:
             await self._cache.set(cache_key, record.model_dump(mode="json"), CACHE_TTL_SECONDS)
-        except Exception:  # noqa: BLE001
+        except Exception:
             log.warning("niche_cache_set_failed")
 
         return record

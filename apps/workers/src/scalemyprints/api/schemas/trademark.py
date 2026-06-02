@@ -20,7 +20,6 @@ from scalemyprints.domain.trademark.models import (
     TrademarkSearchResponse,
 )
 
-
 # -----------------------------------------------------------------------------
 # Request bodies
 # -----------------------------------------------------------------------------

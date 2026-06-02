@@ -24,9 +24,9 @@ Design notes:
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from types import TracebackType
-from typing import Sequence
 
 from scalemyprints.core.logging import get_logger
 from scalemyprints.domain.trademark.enums import JurisdictionCode
@@ -119,7 +119,7 @@ class TrademarkProviderChain:
                 result = await entry.api.search(
                     phrase=phrase, nice_classes=nice_classes
                 )
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 # Adapter shouldn't raise per protocol, but if it does, treat
                 # as failure and continue.
                 log.warning(
@@ -169,7 +169,7 @@ class TrademarkProviderChain:
         )
 
     # Optional async context-manager parity with single adapters — harmless to support.
-    async def __aenter__(self) -> "TrademarkProviderChain":
+    async def __aenter__(self) -> TrademarkProviderChain:
         return self
 
     async def __aexit__(

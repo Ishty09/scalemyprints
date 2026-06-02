@@ -92,7 +92,7 @@ class EtsyPublicSearchAdapter:
             self._owns_client = True
         self._timeout = request_timeout_seconds
 
-    async def __aenter__(self) -> "EtsyPublicSearchAdapter":
+    async def __aenter__(self) -> EtsyPublicSearchAdapter:
         return self
 
     async def __aexit__(
@@ -158,7 +158,7 @@ class EtsyPublicSearchAdapter:
             duration_ms = int((time.monotonic() - start) * 1000)
             log.warning("etsy_timeout", duration_ms=duration_ms)
             return MarketplaceData(duration_ms=duration_ms, error="timeout")
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             duration_ms = int((time.monotonic() - start) * 1000)
             log.warning("etsy_error", error=str(e)[:120], duration_ms=duration_ms)
             return MarketplaceData(

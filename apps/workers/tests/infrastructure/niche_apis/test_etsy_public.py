@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from scalemyprints.infrastructure.niche_apis.etsy_public import (
     _extract_listing_count,
     _extract_listing_urls,

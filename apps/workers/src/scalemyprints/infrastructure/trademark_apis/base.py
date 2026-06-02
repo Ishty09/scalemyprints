@@ -136,7 +136,7 @@ class HttpClientFactory:
         headers: dict[str, str] | None = None,
         *,
         impersonate: str = "chrome124",
-    ) -> "BrowserAsyncClient":
+    ) -> BrowserAsyncClient:
         """
         Build a TLS-fingerprint-spoofing client (curl_cffi-based).
 
@@ -281,7 +281,7 @@ def build_retry_policy(
 
 
 @asynccontextmanager
-async def measure_duration():  # noqa: ANN201 — yields a callable
+async def measure_duration():
     """
     Async context manager that measures elapsed milliseconds.
 

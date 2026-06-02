@@ -80,8 +80,28 @@ class Settings(BaseSettings):
     scraping_provider: Literal["disabled", "playwright", "apify", "brightdata"] = "disabled"
     email_provider: Literal["resend", "supabase"] = "resend"
     cache_provider: Literal["memory", "redis"] = "memory"
-    image_gen_provider: Literal["disabled", "falai_free", "falai_paid", "replicate"] = "disabled"
+    image_gen_provider: Literal[
+        "disabled",
+        "falai_free",
+        "falai_paid",
+        "openai_dalle3",
+        "auto_chain",
+    ] = "auto_chain"
     feature_paid_infrastructure_enabled: bool = False
+
+    # ---------------- Design Engine ----------------
+    # Where rendered designs are persisted (memory = local dev fallback).
+    design_storage_provider: Literal["memory", "supabase"] = "supabase"
+    design_storage_bucket: str = "designs"
+    # Quota — quota_service decides allowance, but free-tier override lives here
+    # so deployments can throttle without changing pricing constants.
+    design_free_tier_monthly_override: int = 0  # 0 = use plan_quotas.FREE_TIER_LIMIT
+    design_default_plan: str = "free"  # used by static plan resolver in dev
+    # Fal.ai
+    fal_api_key: SecretStr = Field(default=SecretStr(""))
+    fal_default_provider: Literal["fal_flux_schnell", "fal_flux_pro"] = "fal_flux_schnell"
+    # OpenAI image-gen toggle (independent of openai_api_key — billing concern)
+    openai_image_gen_enabled: bool = True
 
     # ---------------- LLM keys ----------------
     openai_api_key: SecretStr = Field(default=SecretStr(""))

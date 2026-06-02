@@ -110,7 +110,7 @@ def normalize_date_string(raw: str | None) -> str | None:
     # Fast path: already ISO-shaped — but still parse to validate ranges
     if _ISO_DATE_RE.match(stripped):
         try:
-            parsed = datetime.strptime(stripped, "%Y-%m-%d")  # noqa: DTZ007
+            parsed = datetime.strptime(stripped, "%Y-%m-%d")
             return parsed.date().isoformat()
         except ValueError:
             return None
@@ -118,7 +118,7 @@ def normalize_date_string(raw: str | None) -> str | None:
     # Try formats in order
     for fmt in _DATE_FORMATS:
         try:
-            dt = datetime.strptime(stripped, fmt)  # noqa: DTZ007 — trademark filings are just dates
+            dt = datetime.strptime(stripped, fmt)
             return dt.date().isoformat()
         except ValueError:
             continue
@@ -135,7 +135,7 @@ def normalize_date_string(raw: str | None) -> str | None:
 
 def today_iso() -> str:
     """Today's date as ISO string — testable replacement for hardcoded dates."""
-    return date.today().isoformat()  # noqa: DTZ011 — date-only is timezone-neutral
+    return date.today().isoformat()
 
 
 # -----------------------------------------------------------------------------

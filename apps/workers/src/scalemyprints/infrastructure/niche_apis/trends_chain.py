@@ -34,7 +34,7 @@ class TrendsProviderChain:
             if close_method:
                 try:
                     await close_method()
-                except Exception:  # noqa: BLE001
+                except Exception:
                     logger.warning(
                         "trends_chain_close_failed",
                         provider=type(provider).__name__,
@@ -48,7 +48,7 @@ class TrendsProviderChain:
         for name, provider in self._providers:
             try:
                 result = await provider.fetch(keyword, country)
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 # Adapters shouldn't raise per protocol, but be defensive.
                 log.warning(
                     "trends_chain_provider_raised",
