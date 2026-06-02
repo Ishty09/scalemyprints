@@ -175,6 +175,16 @@ export const apiClient = {
   ): Promise<TResponse> {
     return request<TResponse>('POST', path, body, options)
   },
+  postForm<TResponse>(
+    path: string,
+    formData: FormData,
+    options?: FetchOptions,
+  ): Promise<TResponse> {
+    // multipart/form-data — fetch sets the right Content-Type w/ boundary when
+    // we pass FormData directly. We pass it through `request` via a side
+    // channel: a wrapper object with a `__form` flag.
+    return requestForm<TResponse>(path, formData, options)
+  },
   put<TResponse, TBody = unknown>(
     path: string,
     body?: TBody,
@@ -185,4 +195,76 @@ export const apiClient = {
   delete<TResponse>(path: string, options?: FetchOptions): Promise<TResponse> {
     return request<TResponse>('DELETE', path, undefined, options)
   },
+}
+
+async function requestForm<TResponse>(
+  path: string,
+  formData: FormData,
+  options: FetchOptions = {},
+): Promise<TResponse> {
+  const url = path.startsWith('http') ? path : `${env.NEXT_PUBLIC_API_URL}${path}`
+
+  const headers = new Headers(options.headers)
+  // Do NOT set Content-Type — the browser sets it with the multipart boundary
+  headers.set('Accept', 'application/json')
+  headers.set('X-Request-ID', generateRequestId())
+
+  if (options.auth !== false) {
+    const token = await getAuthToken()
+    if (token) headers.set('Authorization', `Bearer ${token}`)
+  }
+
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS)
+  options.signal?.addEventListener('abort', () => controller.abort())
+
+  let response: Response
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: formData,
+      signal: controller.signal,
+      credentials: 'omit',
+    })
+  } catch (err) {
+    clearTimeout(timeoutId)
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new ApiClientError('request_timeout', 'Request timed out', 0)
+    }
+    throw new ApiClientError(
+      'network_error',
+      err instanceof Error ? err.message : 'Network error',
+      0,
+    )
+  }
+  clearTimeout(timeoutId)
+
+  let payload: unknown
+  try {
+    payload = await response.json()
+  } catch {
+    throw new ApiClientError(
+      'invalid_response',
+      'Server returned non-JSON response',
+      response.status,
+    )
+  }
+
+  if (isFailureEnvelope(payload)) {
+    throw new ApiClientError(payload.error.code, payload.error.message, response.status, {
+      details: payload.error.details,
+      requestId: payload.error.request_id,
+    })
+  }
+
+  if (isSuccessEnvelope<TResponse>(payload)) {
+    return payload.data
+  }
+
+  throw new ApiClientError(
+    'malformed_response',
+    'Server returned unexpected payload',
+    response.status,
+  )
 }
