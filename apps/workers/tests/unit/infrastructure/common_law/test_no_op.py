@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from scalemyprints.infrastructure.common_law.no_op import NoOpCommonLawChecker
 
 

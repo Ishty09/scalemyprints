@@ -270,14 +270,14 @@ class TrademarkSearchService:
                 api.search(phrase=phrase, nice_classes=nice_classes),
                 timeout=self._config.per_jurisdiction_timeout_seconds,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return TrademarkSearchResult(
                 jurisdiction=api.jurisdiction,
                 records=[],
                 duration_ms=int(self._config.per_jurisdiction_timeout_seconds * 1000),
                 error="timeout",
             )
-        except Exception as e:  # noqa: BLE001 — port contract says no raise, but safeguard
+        except Exception as e:
             logger.exception("jurisdiction_port_raised", jurisdiction=api.jurisdiction.value)
             return TrademarkSearchResult(
                 jurisdiction=api.jurisdiction,
@@ -294,10 +294,10 @@ class TrademarkSearchService:
                 self._common_law.estimate_density(phrase),
                 timeout=self._config.common_law_timeout_seconds,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning("common_law_timeout")
             return 0.0
-        except Exception:  # noqa: BLE001
+        except Exception:
             logger.exception("common_law_raised")
             return 0.0
 
@@ -383,7 +383,7 @@ class TrademarkSearchService:
             response = TrademarkSearchResponse.model_validate(data)
             # Flip the flag — caller asked for fresh; we're serving cached
             return response.model_copy(update={"from_cache": True})
-        except Exception:  # noqa: BLE001 — cache errors are non-fatal
+        except Exception:
             logger.warning("cache_get_failed", key=key)
             return None
 
@@ -393,5 +393,5 @@ class TrademarkSearchService:
         try:
             payload = orjson.dumps(response.model_dump(mode="json"))
             await self._cache.set(key, payload, ttl_seconds=CACHE_TTL_SECONDS)
-        except Exception:  # noqa: BLE001
+        except Exception:
             logger.warning("cache_set_failed", key=key)

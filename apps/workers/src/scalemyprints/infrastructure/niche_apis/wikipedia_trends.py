@@ -86,7 +86,7 @@ class WikipediaTrendsAdapter:
         )
         self._timeout = request_timeout_seconds
 
-    async def __aenter__(self) -> "WikipediaTrendsAdapter":
+    async def __aenter__(self) -> WikipediaTrendsAdapter:
         return self
 
     async def __aexit__(
@@ -152,7 +152,7 @@ class WikipediaTrendsAdapter:
                 error=None,
             )
 
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             duration_ms = int((time.monotonic() - start) * 1000)
             log.warning(
                 "wikipedia_trends_error",
@@ -209,7 +209,7 @@ class WikipediaTrendsAdapter:
             response = await self._search_client.get(
                 "/w/api.php", params=params, timeout=self._timeout,
             )
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             logger.warning("wikipedia_opensearch_error", error=str(e)[:120])
             return []
 
@@ -248,7 +248,7 @@ class WikipediaTrendsAdapter:
             response = await self._pageviews_client.get(
                 path, timeout=self._timeout,
             )
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             logger.warning(
                 "wikipedia_pageviews_error",
                 article=article,

@@ -32,7 +32,7 @@ class MarketplaceProviderChain:
             if close_method:
                 try:
                     await close_method()
-                except Exception:  # noqa: BLE001
+                except Exception:
                     logger.warning(
                         "marketplace_chain_close_failed",
                         provider=type(provider).__name__,
@@ -46,7 +46,7 @@ class MarketplaceProviderChain:
         for name, provider in self._providers:
             try:
                 result = await provider.fetch(keyword, country)
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 log.warning(
                     "marketplace_chain_provider_raised",
                     provider=name,

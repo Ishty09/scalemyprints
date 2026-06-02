@@ -84,7 +84,7 @@ export const TOOLS = {
     description:
       'Agentic AI design generation with multi-model orchestration, style consistency, and provenance logging.',
     icon: 'Sparkles',
-    status: 'coming_soon',
+    status: 'live',
     order: 3,
   },
   spy: {

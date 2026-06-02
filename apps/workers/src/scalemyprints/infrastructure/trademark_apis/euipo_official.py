@@ -108,7 +108,7 @@ class EUIPOOfficialClient:
         self._token_expires_at: float = 0.0
         self._token_lock = asyncio.Lock()
 
-    async def __aenter__(self) -> "EUIPOOfficialClient":
+    async def __aenter__(self) -> EUIPOOfficialClient:
         return self
 
     async def __aexit__(
@@ -229,7 +229,7 @@ class EUIPOOfficialClient:
                     duration_ms=elapsed(),
                     error=None,
                 )
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 log.exception("euipo_search_unexpected_error")
                 return TrademarkSearchResult(
                     jurisdiction=self.jurisdiction,

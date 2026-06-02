@@ -21,7 +21,6 @@ from scalemyprints.domain.niche.search_service import NicheSearchService
 from scalemyprints.infrastructure.cache.niche_memory import NicheMemoryCache
 from scalemyprints.infrastructure.container import get_container
 
-
 # -----------------------------------------------------------------------------
 # Fakes
 # -----------------------------------------------------------------------------
@@ -151,7 +150,7 @@ def app_with_fake_niche(fake_trends, fake_marketplace, fake_events):
     app.dependency_overrides[get_niche_search_service] = _override
     # Override container's events provider too (for /events endpoint)
     container = get_container()
-    container._niche_events = fake_events  # noqa: SLF001
+    container._niche_events = fake_events
     yield app
     app.dependency_overrides.clear()
 

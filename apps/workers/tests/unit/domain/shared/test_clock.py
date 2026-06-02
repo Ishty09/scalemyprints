@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
@@ -24,7 +24,7 @@ class TestFixedClock:
 
     def test_requires_timezone_aware(self) -> None:
         with pytest.raises(ValueError, match="timezone-aware"):
-            FixedClock(datetime(2026, 1, 1))  # noqa: DTZ001 — intentional test
+            FixedClock(datetime(2026, 1, 1))
 
     def test_advance_by_seconds(self) -> None:
         fixed_time = datetime(2026, 1, 1, tzinfo=UTC)

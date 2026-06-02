@@ -17,6 +17,15 @@ from functools import lru_cache
 
 from scalemyprints.core.config import Settings, get_settings
 from scalemyprints.core.logging import get_logger
+from scalemyprints.domain.design.enums import ImageGenProviderName
+from scalemyprints.domain.design.generation_service import DesignGenerationService
+from scalemyprints.domain.design.ports import (
+    DesignJobStore,
+    DesignStorage,
+    ImageGenProvider,
+    PromptEnricher,
+    QuotaService,
+)
 from scalemyprints.domain.niche.ports import (
     EventsProvider,
     MarketplaceProvider,
@@ -35,6 +44,20 @@ from scalemyprints.domain.trademark.search_service import TrademarkSearchService
 from scalemyprints.infrastructure.cache.memory import MemoryCache
 from scalemyprints.infrastructure.cache.niche_memory import NicheMemoryCache
 from scalemyprints.infrastructure.common_law.no_op import NoOpCommonLawChecker
+from scalemyprints.infrastructure.image_gen.disabled import DisabledImageGenProvider
+from scalemyprints.infrastructure.image_gen.falai import FalFluxAdapter
+from scalemyprints.infrastructure.image_gen.openai_dalle import OpenAIDalleAdapter
+from scalemyprints.infrastructure.image_gen.provider_chain import ImageGenProviderChain
+from scalemyprints.infrastructure.job_store.memory_job_store import (
+    MemoryDesignJobStore,
+)
+from scalemyprints.infrastructure.job_store.supabase_job_store import (
+    SupabaseDesignJobStore,
+)
+from scalemyprints.infrastructure.llm.design_prompt_enricher import (
+    OpenAIDesignPromptEnricher,
+    TemplateOnlyDesignPromptEnricher,
+)
 from scalemyprints.infrastructure.llm.niche_expander import OpenAINicheExpander
 from scalemyprints.infrastructure.niche_apis.apify_etsy import ApifyEtsyAdapter
 from scalemyprints.infrastructure.niche_apis.ebay_browse import EbayBrowseAdapter
@@ -48,6 +71,13 @@ from scalemyprints.infrastructure.niche_apis.trends_chain import TrendsProviderC
 from scalemyprints.infrastructure.niche_apis.wikipedia_trends import (
     WikipediaTrendsAdapter,
 )
+from scalemyprints.infrastructure.quota.plan_resolver import StaticPlanResolver
+from scalemyprints.infrastructure.quota.supabase_quota import (
+    MemoryDesignQuota,
+    SupabaseDesignQuota,
+)
+from scalemyprints.infrastructure.storage.memory_storage import MemoryDesignStorage
+from scalemyprints.infrastructure.storage.supabase_storage import SupabaseDesignStorage
 from scalemyprints.infrastructure.trademark_apis.base import HttpClientFactory
 from scalemyprints.infrastructure.trademark_apis.euipo import EUIPOClient
 from scalemyprints.infrastructure.trademark_apis.euipo_official import (
@@ -98,6 +128,14 @@ class ServiceContainer:
         self._niche_events: EventsProvider = self._build_niche_events()
         self._niche_expander: NicheExpander | None = self._build_niche_expander()
 
+        # ---- Design Engine ----
+        self._design_provider_name = ""
+        self._design_image_gen: ImageGenProvider = self._build_design_image_gen()
+        self._design_enricher: PromptEnricher = self._build_design_enricher()
+        self._design_storage: DesignStorage = self._build_design_storage()
+        self._design_job_store: DesignJobStore = self._build_design_job_store()
+        self._design_quota: QuotaService = self._build_design_quota()
+
         logger.info(
             "service_container_initialized",
             cache_provider=self._settings.cache_provider,
@@ -109,6 +147,8 @@ class ServiceContainer:
             niche_marketplace=self._settings.niche_marketplace_provider,
             niche_events=self._settings.niche_events_provider,
             niche_llm=self._settings.niche_llm_provider,
+            design_image_gen=self._design_provider_name,
+            design_storage=self._settings.design_storage_provider,
             environment=self._settings.environment.value,
         )
 
@@ -176,7 +216,7 @@ class ServiceContainer:
                     )
                     self._owned_trademark_clients.append(euipo_official)
                     providers.append(("euipo_official", euipo_official))
-                except Exception as e:  # noqa: BLE001
+                except Exception as e:
                     logger.warning(
                         "euipo_official_init_failed",
                         error=str(e),
@@ -252,7 +292,7 @@ class ServiceContainer:
                     "tmview_uk_fallback_unavailable",
                     actual_jurisdiction=tmview_uk.jurisdiction.value,
                 )
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             logger.warning("tmview_uk_fallback_init_failed", error=str(e))
 
         self._uk_provider_name = "+".join(name for name, _ in providers)
@@ -319,7 +359,7 @@ class ServiceContainer:
                 )
                 providers.append(("ebay_browse", ebay))
                 logger.info("marketplace_provider_ebay_configured")
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 logger.warning("ebay_browse_init_failed", error=str(e))
         else:
             logger.info("ebay_browse_skipped_no_credentials")
@@ -411,6 +451,163 @@ class ServiceContainer:
         )
 
     # ------------------------------------------------------------------
+    # DESIGN ENGINE builders / accessors
+    # ------------------------------------------------------------------
+
+    def _build_design_image_gen(self) -> ImageGenProvider:
+        """
+        Image-gen chain (first-success-wins):
+          • IMAGE_GEN_PROVIDER=disabled            → disabled stub
+          • IMAGE_GEN_PROVIDER=falai_free|falai_paid → Fal only
+          • IMAGE_GEN_PROVIDER=openai_dalle3       → OpenAI only
+          • IMAGE_GEN_PROVIDER=auto_chain (default) → Fal → DALL-E → disabled
+        """
+        provider_setting = self._settings.image_gen_provider
+
+        def _fal(provider_enum: ImageGenProviderName) -> ImageGenProvider | None:
+            key = self._settings.fal_api_key.get_secret_value()
+            if not key:
+                return None
+            return FalFluxAdapter(
+                api_key=key,
+                provider=provider_enum,
+                http_factory=self._http_factory,
+            )
+
+        def _dalle() -> ImageGenProvider | None:
+            if not self._settings.openai_image_gen_enabled:
+                return None
+            key = self._settings.openai_api_key.get_secret_value()
+            if not key:
+                return None
+            return OpenAIDalleAdapter(
+                api_key=key,
+                http_factory=self._http_factory,
+            )
+
+        if provider_setting == "disabled":
+            self._design_provider_name = "disabled"
+            return DisabledImageGenProvider()
+
+        if provider_setting in ("falai_free", "falai_paid"):
+            chosen = (
+                ImageGenProviderName.FAL_FLUX_PRO
+                if provider_setting == "falai_paid"
+                else ImageGenProviderName.FAL_FLUX_SCHNELL
+            )
+            adapter = _fal(chosen)
+            if adapter is None:
+                logger.warning("design_falai_no_key_falling_back_disabled")
+                self._design_provider_name = "disabled"
+                return DisabledImageGenProvider()
+            self._design_provider_name = chosen.value
+            return adapter
+
+        if provider_setting == "openai_dalle3":
+            adapter = _dalle()
+            if adapter is None:
+                logger.warning("design_dalle_no_key_falling_back_disabled")
+                self._design_provider_name = "disabled"
+                return DisabledImageGenProvider()
+            self._design_provider_name = ImageGenProviderName.OPENAI_DALLE3.value
+            return adapter
+
+        # auto_chain — try Fal Schnell, fall through to DALL-E.
+        chain: list[tuple[str, ImageGenProvider]] = []
+        fal = _fal(ImageGenProviderName(self._settings.fal_default_provider))
+        if fal is not None:
+            chain.append((fal.provider_name.value, fal))
+        dalle = _dalle()
+        if dalle is not None:
+            chain.append((dalle.provider_name.value, dalle))
+        if not chain:
+            logger.warning("design_no_image_gen_keys_disabled")
+            self._design_provider_name = "disabled"
+            return DisabledImageGenProvider()
+        self._design_provider_name = "+".join(name for name, _ in chain)
+        return ImageGenProviderChain(providers=chain)
+
+    def _build_design_enricher(self) -> PromptEnricher:
+        key = self._settings.openai_api_key.get_secret_value()
+        if not key:
+            return TemplateOnlyDesignPromptEnricher()
+        return OpenAIDesignPromptEnricher(
+            api_key=key,
+            model=self._settings.openai_model_cheap,
+        )
+
+    def _build_design_storage(self) -> DesignStorage:
+        if self._settings.design_storage_provider == "memory":
+            logger.info("design_storage_memory_mode")
+            return MemoryDesignStorage()
+        url = self._settings.supabase_url
+        key = self._settings.supabase_service_role_key.get_secret_value()
+        if not url or not key:
+            logger.warning("design_storage_supabase_creds_missing_falling_back_memory")
+            return MemoryDesignStorage()
+        return SupabaseDesignStorage(
+            supabase_url=url,
+            service_role_key=key,
+            bucket=self._settings.design_storage_bucket,
+        )
+
+    def _build_design_job_store(self) -> DesignJobStore:
+        if self._settings.design_storage_provider == "memory":
+            return MemoryDesignJobStore()
+        url = self._settings.supabase_url
+        key = self._settings.supabase_service_role_key.get_secret_value()
+        if not url or not key:
+            logger.warning("design_job_store_supabase_creds_missing_falling_back_memory")
+            return MemoryDesignJobStore()
+        return SupabaseDesignJobStore(supabase_url=url, service_role_key=key)
+
+    def _build_design_quota(self) -> QuotaService:
+        if self._settings.design_storage_provider == "memory":
+            return MemoryDesignQuota(
+                plan_resolver=StaticPlanResolver(
+                    default_plan=self._settings.design_default_plan
+                ),
+            )
+        url = self._settings.supabase_url
+        key = self._settings.supabase_service_role_key.get_secret_value()
+        if not url or not key:
+            logger.warning("design_quota_supabase_creds_missing_falling_back_memory")
+            return MemoryDesignQuota(
+                plan_resolver=StaticPlanResolver(
+                    default_plan=self._settings.design_default_plan
+                ),
+            )
+        return SupabaseDesignQuota(
+            supabase_url=url,
+            service_role_key=key,
+        )
+
+    @property
+    def design_image_gen(self) -> ImageGenProvider:
+        return self._design_image_gen
+
+    @property
+    def design_job_store(self) -> DesignJobStore:
+        return self._design_job_store
+
+    @property
+    def design_quota(self) -> QuotaService:
+        return self._design_quota
+
+    @property
+    def design_storage(self) -> DesignStorage:
+        return self._design_storage
+
+    def build_design_generation_service(self) -> DesignGenerationService:
+        return DesignGenerationService(
+            prompt_enricher=self._design_enricher,
+            image_gen_provider=self._design_image_gen,
+            storage=self._design_storage,
+            job_store=self._design_job_store,
+            quota=self._design_quota,
+        )
+
+    # ------------------------------------------------------------------
     # Lifecycle
     # ------------------------------------------------------------------
 
@@ -426,7 +623,7 @@ class ServiceContainer:
             if close_method:
                 try:
                     await close_method()
-                except Exception:  # noqa: BLE001
+                except Exception:
                     logger.warning(
                         "trademark_client_close_failed",
                         client=type(client).__name__,
@@ -438,7 +635,7 @@ class ServiceContainer:
             if close_method:
                 try:
                     await close_method()
-                except Exception:  # noqa: BLE001
+                except Exception:
                     logger.warning(
                         "trademark_adapter_close_failed",
                         adapter=type(adapter).__name__,
@@ -448,10 +645,23 @@ class ServiceContainer:
             if close_method:
                 try:
                     await close_method()
-                except Exception:  # noqa: BLE001
+                except Exception:
                     logger.warning(
                         "niche_client_close_failed",
                         client=type(client).__name__,
+                    )
+        for design_dep in (
+            self._design_image_gen,
+            self._design_storage,
+        ):
+            close_method = getattr(design_dep, "aclose", None)
+            if close_method:
+                try:
+                    await close_method()
+                except Exception:
+                    logger.warning(
+                        "design_dep_close_failed",
+                        component=type(design_dep).__name__,
                     )
         logger.info("service_container_closed")
 

@@ -21,7 +21,6 @@ from scalemyprints.domain.niche.scoring_service import (
     calculate_nhs,
 )
 
-
 # -----------------------------------------------------------------------------
 # ScoringWeights validation
 # -----------------------------------------------------------------------------

@@ -13,8 +13,8 @@ apply tighter rate limits when unauthenticated.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime, timedelta
 from datetime import date as date_type
-from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -37,8 +37,7 @@ from scalemyprints.api.schemas.niche import (
     NicheExpansionResponse,
     NicheSearchRequest,
 )
-from scalemyprints.core.config import Settings, get_settings
-from scalemyprints.core.errors import RateLimitedError
+from scalemyprints.core.config import get_settings
 from scalemyprints.core.logging import bind_request_context, get_logger
 from scalemyprints.domain.niche.enums import Country, EventCategory
 from scalemyprints.domain.niche.models import NicheRecord
@@ -122,7 +121,7 @@ async def list_events(
     """
     bind_request_context(user_id=user.id, anonymous=user.is_anonymous)
 
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
     start = from_date or today
     end = to_date or (today + timedelta(days=90))
 

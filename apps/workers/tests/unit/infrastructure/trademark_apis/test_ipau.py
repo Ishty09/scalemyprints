@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import httpx
-import pytest
 import respx
 
 from scalemyprints.domain.trademark.enums import FilingStatus, JurisdictionCode

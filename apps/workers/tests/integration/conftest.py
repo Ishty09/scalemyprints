@@ -18,7 +18,7 @@ from httpx import ASGITransport, AsyncClient
 from scalemyprints.app import create_app
 from scalemyprints.core.config import get_settings
 from scalemyprints.domain.trademark.enums import JurisdictionCode
-from scalemyprints.domain.trademark.ports import TrademarkAPI, TrademarkSearchResult
+from scalemyprints.domain.trademark.ports import TrademarkSearchResult
 from scalemyprints.domain.trademark.search_service import TrademarkSearchService
 from scalemyprints.infrastructure.cache.memory import MemoryCache
 from scalemyprints.infrastructure.common_law.no_op import NoOpCommonLawChecker

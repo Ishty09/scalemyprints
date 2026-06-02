@@ -77,7 +77,7 @@ class UKIPOClient:
             )
             self._owns_client = True
 
-    async def __aenter__(self) -> "UKIPOClient":
+    async def __aenter__(self) -> UKIPOClient:
         return self
 
     async def __aexit__(
@@ -118,7 +118,7 @@ class UKIPOClient:
                     duration_ms=elapsed(),
                     error=f"http_{e.response.status_code}",
                 )
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 log.exception("ukipo_search_unexpected_error")
                 return TrademarkSearchResult(
                     jurisdiction=self.jurisdiction,

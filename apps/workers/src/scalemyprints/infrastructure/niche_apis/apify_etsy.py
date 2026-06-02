@@ -160,7 +160,7 @@ class ApifyEtsyAdapter:
                 error=None,
             )
 
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             duration_ms = int((time.monotonic() - start) * 1000)
             log.warning(
                 "apify_unexpected_error",

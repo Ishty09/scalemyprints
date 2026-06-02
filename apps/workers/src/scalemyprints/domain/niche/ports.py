@@ -19,7 +19,6 @@ from pydantic import BaseModel, ConfigDict, Field
 from scalemyprints.domain.niche.enums import Country
 from scalemyprints.domain.niche.models import Event
 
-
 # -----------------------------------------------------------------------------
 # Result objects — what adapters return
 # -----------------------------------------------------------------------------

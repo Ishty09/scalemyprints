@@ -58,7 +58,7 @@ class CurrentUser:
     is_anonymous: bool
 
     @classmethod
-    def anonymous(cls) -> "CurrentUser":
+    def anonymous(cls) -> CurrentUser:
         return cls(id="anonymous", email=None, is_anonymous=True)
 
 
@@ -129,7 +129,7 @@ async def _verify_jwt(token: str, settings: Settings) -> dict[str, Any]:
         except KeyError as e:
             logger.warning("jwt_unknown_kid", kid=kid, alg=alg)
             raise UnauthorizedError(f"Unknown signing key: {kid}") from e
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             logger.warning("jwks_fetch_failed", error=str(e))
             raise UnauthorizedError("Could not fetch signing keys") from e
 

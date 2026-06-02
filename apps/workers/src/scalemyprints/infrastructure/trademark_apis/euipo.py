@@ -63,7 +63,7 @@ class EUIPOClient:
             self._client = factory.build(base_url=self._base_url)
             self._owns_client = True
 
-    async def __aenter__(self) -> "EUIPOClient":
+    async def __aenter__(self) -> EUIPOClient:
         return self
 
     async def __aexit__(
@@ -117,7 +117,7 @@ class EUIPOClient:
                     duration_ms=elapsed(),
                     error=None,
                 )
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 log.exception("euipo_search_unexpected_error")
                 return TrademarkSearchResult(
                     jurisdiction=self.jurisdiction,

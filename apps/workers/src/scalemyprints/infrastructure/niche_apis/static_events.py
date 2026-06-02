@@ -38,7 +38,7 @@ def _load_events_db() -> list[dict]:
             data = json.load(f)
         logger.info("static_events_loaded", count=len(data))
         return data
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         logger.error("static_events_load_failed", error=str(e))
         return []
 

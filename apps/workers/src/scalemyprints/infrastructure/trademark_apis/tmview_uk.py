@@ -86,7 +86,7 @@ class TMViewUKClient:
             )
             self._owns_client = True
 
-    async def __aenter__(self) -> "TMViewUKClient":
+    async def __aenter__(self) -> TMViewUKClient:
         return self
 
     async def __aexit__(
@@ -128,7 +128,7 @@ class TMViewUKClient:
                     duration_ms=elapsed(),
                     error=f"http_{e.response.status_code}",
                 )
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 log.exception("tmview_uk_search_unexpected_error")
                 return TrademarkSearchResult(
                     jurisdiction=self.jurisdiction,
