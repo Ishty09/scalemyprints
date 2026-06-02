@@ -1,5 +1,5 @@
 -- =============================================================================
--- Design Engine — Phase A schema
+-- Design Engine — Phase A schema (idempotent / re-runnable)
 -- =============================================================================
 -- Adds:
 --   • design_jobs       — persisted DesignJob lifecycle
@@ -8,8 +8,11 @@
 --   • Storage bucket    — "designs" (private; signed URLs only)
 --   • RPC               — increment_design_quota(user, bucket, n) (atomic upsert)
 --
--- All tables use RLS so users only ever see their own rows. Writes from
--- the service worker (FastAPI) use the service role and bypass RLS.
+-- NOTE: The storage.objects RLS policy (per-user read access) is NOT
+-- created here — Supabase requires that to be added via the Dashboard
+-- (Storage → Policies → New policy on the "designs" bucket) because
+-- storage.objects is owned by the supabase_storage_admin role and not
+-- modifiable from the SQL editor. See README / PR description.
 -- =============================================================================
 
 
@@ -35,6 +38,7 @@ CREATE TABLE IF NOT EXISTS public.user_plans (
 
 ALTER TABLE public.user_plans ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS user_plans_select_own ON public.user_plans;
 CREATE POLICY user_plans_select_own ON public.user_plans
   FOR SELECT USING (auth.uid() = user_id);
 
@@ -101,15 +105,19 @@ CREATE INDEX IF NOT EXISTS idx_design_jobs_parent
 
 ALTER TABLE public.design_jobs ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS design_jobs_select_own ON public.design_jobs;
 CREATE POLICY design_jobs_select_own ON public.design_jobs
   FOR SELECT USING (auth.uid() = user_id AND deleted_at IS NULL);
 
+DROP POLICY IF EXISTS design_jobs_insert_own ON public.design_jobs;
 CREATE POLICY design_jobs_insert_own ON public.design_jobs
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS design_jobs_update_own ON public.design_jobs;
 CREATE POLICY design_jobs_update_own ON public.design_jobs
   FOR UPDATE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS design_jobs_delete_own ON public.design_jobs;
 CREATE POLICY design_jobs_delete_own ON public.design_jobs
   FOR DELETE USING (auth.uid() = user_id);
 
@@ -136,6 +144,7 @@ CREATE INDEX IF NOT EXISTS idx_design_quota_user
 
 ALTER TABLE public.design_quota ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS design_quota_select_own ON public.design_quota;
 CREATE POLICY design_quota_select_own ON public.design_quota
   FOR SELECT USING (auth.uid() = user_id);
 
@@ -187,6 +196,15 @@ COMMENT ON FUNCTION public.increment_design_quota IS
 -- 5. Storage bucket — designs/{user_id}/{job_id}/{n}.png
 -- ---------------------------------------------------------------------------
 -- Created idempotently. Bucket is PRIVATE — access via signed URLs only.
+-- The read-own RLS policy on storage.objects must be created via the
+-- Supabase Dashboard (Storage → Policies → "designs" bucket), because
+-- storage.objects is owned by supabase_storage_admin and can't be
+-- modified from the SQL editor. Use this expression:
+--
+--   bucket_id = 'designs'
+--   AND (auth.uid())::text = (storage.foldername(name))[1]
+--
+-- Operation: SELECT  •  Target roles: authenticated
 
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (
@@ -197,19 +215,6 @@ VALUES (
   ARRAY['image/png', 'image/webp']
 )
 ON CONFLICT (id) DO NOTHING;
-
--- Allow users to download their own files (path starts with their user_id).
-DROP POLICY IF EXISTS design_storage_read_own ON storage.objects;
-CREATE POLICY design_storage_read_own ON storage.objects
-  FOR SELECT USING (
-    bucket_id = 'designs'
-    AND (auth.uid())::text = (storage.foldername(name))[1]
-  );
-
--- Service role bypasses RLS, so worker uploads are unaffected.
-
-COMMENT ON POLICY design_storage_read_own ON storage.objects IS
-  'Users can read only files under designs/{their-user-id}/...';
 
 
 -- ---------------------------------------------------------------------------
