@@ -25,6 +25,15 @@ from scalemyprints.domain.niche.ports import (
     TrendsProvider,
 )
 from scalemyprints.domain.niche.search_service import NicheSearchService
+from scalemyprints.domain.spy.enums import Marketplace
+from scalemyprints.domain.spy.ports import (
+    EmbeddingStore,
+    ImageEmbedder,
+    ListingStore,
+    SpyMarketplaceAdapter,
+)
+from scalemyprints.domain.spy.reverse_image_service import ReverseImageSearchService
+from scalemyprints.domain.spy.search_service import SpySearchService
 from scalemyprints.domain.trademark.enums import JurisdictionCode
 from scalemyprints.domain.trademark.ports import (
     CacheStore,
@@ -35,6 +44,28 @@ from scalemyprints.domain.trademark.search_service import TrademarkSearchService
 from scalemyprints.infrastructure.cache.memory import MemoryCache
 from scalemyprints.infrastructure.cache.niche_memory import NicheMemoryCache
 from scalemyprints.infrastructure.common_law.no_op import NoOpCommonLawChecker
+from scalemyprints.infrastructure.image_search.clip_embedder import (
+    CLIPImageEmbedder,
+    StubImageEmbedder,
+)
+from scalemyprints.infrastructure.image_search.memory_store import MemoryEmbeddingStore
+from scalemyprints.infrastructure.image_search.pgvector_store import (
+    SupabasePgvectorStore,
+)
+from scalemyprints.infrastructure.spy_apis.etsy_spy import EtsySpyAdapter
+from scalemyprints.infrastructure.spy_apis.merch_spy import MerchSpyAdapter
+from scalemyprints.infrastructure.spy_apis.redbubble_spy import RedbubbleSpyAdapter
+from scalemyprints.infrastructure.spy_storage.hot_movers import (
+    HotMoversProvider,
+    MemoryHotMoversProvider,
+    SupabaseHotMoversProvider,
+)
+from scalemyprints.infrastructure.spy_storage.memory_listing_store import (
+    MemoryListingStore,
+)
+from scalemyprints.infrastructure.spy_storage.supabase_listing_store import (
+    SupabaseListingStore,
+)
 from scalemyprints.infrastructure.llm.niche_expander import OpenAINicheExpander
 from scalemyprints.infrastructure.niche_apis.apify_etsy import ApifyEtsyAdapter
 from scalemyprints.infrastructure.niche_apis.ebay_browse import EbayBrowseAdapter
@@ -98,6 +129,13 @@ class ServiceContainer:
         self._niche_events: EventsProvider = self._build_niche_events()
         self._niche_expander: NicheExpander | None = self._build_niche_expander()
 
+        # ---- Spy ----
+        self._spy_adapters: list[SpyMarketplaceAdapter] = self._build_spy_adapters()
+        self._spy_listing_store: ListingStore = self._build_spy_listing_store()
+        self._spy_embedding_store: EmbeddingStore = self._build_spy_embedding_store()
+        self._spy_image_embedder: ImageEmbedder = self._build_spy_image_embedder()
+        self._spy_hot_movers: HotMoversProvider = self._build_spy_hot_movers()
+
         logger.info(
             "service_container_initialized",
             cache_provider=self._settings.cache_provider,
@@ -109,6 +147,9 @@ class ServiceContainer:
             niche_marketplace=self._settings.niche_marketplace_provider,
             niche_events=self._settings.niche_events_provider,
             niche_llm=self._settings.niche_llm_provider,
+            spy_storage=self._settings.spy_storage_provider,
+            spy_embedder=self._settings.spy_image_embedder,
+            spy_adapters=[a.marketplace.value for a in self._spy_adapters],
             environment=self._settings.environment.value,
         )
 
@@ -409,6 +450,83 @@ class ServiceContainer:
             events_provider=self._niche_events,
             cache=self._niche_cache,
         )
+
+    # ------------------------------------------------------------------
+    # SPY builders / accessors
+    # ------------------------------------------------------------------
+
+    def _build_spy_adapters(self) -> list[SpyMarketplaceAdapter]:
+        out: list[SpyMarketplaceAdapter] = []
+        proxy = self._settings.spy_proxy_url or None
+
+        if self._settings.spy_etsy_enabled:
+            out.append(EtsySpyAdapter(proxy_url=proxy))
+        if self._settings.spy_merch_enabled:
+            out.append(
+                MerchSpyAdapter(
+                    apify_token=self._settings.apify_api_token.get_secret_value() or None,
+                )
+            )
+        if self._settings.spy_redbubble_enabled:
+            out.append(RedbubbleSpyAdapter(proxy_url=proxy))
+        return out
+
+    def _build_spy_listing_store(self) -> ListingStore:
+        if self._settings.spy_storage_provider == "memory":
+            return MemoryListingStore()
+        url = self._settings.supabase_url
+        key = self._settings.supabase_service_role_key.get_secret_value()
+        if not url or not key:
+            logger.warning("spy_listing_store_supabase_creds_missing_falling_back_memory")
+            return MemoryListingStore()
+        return SupabaseListingStore(supabase_url=url, service_role_key=key)
+
+    def _build_spy_embedding_store(self) -> EmbeddingStore:
+        if self._settings.spy_storage_provider == "memory":
+            return MemoryEmbeddingStore()
+        url = self._settings.supabase_url
+        key = self._settings.supabase_service_role_key.get_secret_value()
+        if not url or not key:
+            logger.warning("spy_embedding_store_supabase_creds_missing_falling_back_memory")
+            return MemoryEmbeddingStore()
+        return SupabasePgvectorStore(supabase_url=url, service_role_key=key)
+
+    def _build_spy_image_embedder(self) -> ImageEmbedder:
+        if self._settings.spy_image_embedder == "stub":
+            return StubImageEmbedder()
+        return CLIPImageEmbedder(model_name=self._settings.spy_clip_model)
+
+    def _build_spy_hot_movers(self) -> HotMoversProvider:
+        if self._settings.spy_storage_provider == "memory":
+            return MemoryHotMoversProvider()
+        url = self._settings.supabase_url
+        key = self._settings.supabase_service_role_key.get_secret_value()
+        if not url or not key:
+            return MemoryHotMoversProvider()
+        return SupabaseHotMoversProvider(supabase_url=url, service_role_key=key)
+
+    @property
+    def spy_search_service(self) -> SpySearchService:
+        return SpySearchService(
+            adapters=self._spy_adapters,
+            listing_store=self._spy_listing_store,
+        )
+
+    @property
+    def spy_reverse_image_service(self) -> ReverseImageSearchService:
+        return ReverseImageSearchService(
+            embedder=self._spy_image_embedder,
+            embedding_store=self._spy_embedding_store,
+            listing_store=self._spy_listing_store,
+        )
+
+    @property
+    def spy_listing_store(self) -> ListingStore:
+        return self._spy_listing_store
+
+    @property
+    def spy_hot_movers_provider(self) -> HotMoversProvider:
+        return self._spy_hot_movers
 
     # ------------------------------------------------------------------
     # Lifecycle

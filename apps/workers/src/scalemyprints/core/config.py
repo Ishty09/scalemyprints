@@ -177,6 +177,19 @@ class Settings(BaseSettings):
     rate_limit_per_minute: int = 60
     rate_limit_trademark_free_tier: int = 5
 
+    # ---------------- Spy (Phase 1) ----------------
+    # Storage: "memory" (dev/tests) vs "supabase" (production)
+    spy_storage_provider: Literal["memory", "supabase"] = "supabase"
+    # Image embedding: "stub" (deterministic, no torch), "clip" (sentence-transformers)
+    spy_image_embedder: Literal["stub", "clip"] = "clip"
+    spy_clip_model: str = "clip-ViT-B-32"
+    # Per-marketplace enable flags (off-switch for adapters that get hot-blocked)
+    spy_etsy_enabled: bool = True
+    spy_merch_enabled: bool = True
+    spy_redbubble_enabled: bool = True
+    # Optional residential proxy URL applied to every direct scrape adapter
+    spy_proxy_url: str = ""
+
     # ---------------- Validators ----------------
 
     @field_validator("worker_cors_origins")

@@ -22,7 +22,12 @@ from sentry_sdk.integrations.fastapi import FastApiIntegration
 from scalemyprints import __version__
 from scalemyprints.api.exception_handlers import register_exception_handlers
 from scalemyprints.api.middleware.request_context import RequestContextMiddleware
-from scalemyprints.api.routes import health_router, niche_router, trademark_router
+from scalemyprints.api.routes import (
+    health_router,
+    niche_router,
+    spy_router,
+    trademark_router,
+)
 from scalemyprints.core.config import Settings, get_settings
 from scalemyprints.core.logging import configure_logging, get_logger
 from scalemyprints.infrastructure.container import get_container
@@ -109,6 +114,7 @@ def create_app() -> FastAPI:
     app.include_router(health_router)
     app.include_router(trademark_router)
     app.include_router(niche_router)
+    app.include_router(spy_router)
 
     @app.get("/", include_in_schema=False)
     async def root() -> dict[str, str]:
