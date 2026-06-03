@@ -93,6 +93,13 @@ lerna-debug.log*
 supabase/.branches
 supabase/.temp
 supabase/seed.sql
+infra/supabase/.temp/
+
+# OpenNext build output
+apps/web/.open-next/
+
+# Claude Code project state
+.claude/
 
 # Extension builds
 apps/extension/dist/

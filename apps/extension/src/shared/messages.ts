@@ -10,6 +10,7 @@
  */
 
 import type {
+  TMOverlayResponse,
   TrademarkSearchRequest,
   TrademarkSearchResponse,
 } from '@scalemyprints/contracts'
@@ -38,9 +39,27 @@ export type GetUsageStatsResponse = {
   data: UsageStats
 }
 
-export type ExtensionMessage = SearchTrademarkRequest | GetUsageStatsRequest
+/**
+ * Spy mode — fuse trademark risk with Spy market intelligence
+ * (velocity / saturation / GMV) for a one-shot go/caution/block.
+ */
+export type SpyOverlayRequest = {
+  type: 'spy_overlay'
+  phrase: string
+  niceClasses?: number[]
+}
+
+export type SpyOverlayResponse =
+  | { ok: true; data: TMOverlayResponse }
+  | { ok: false; error: { code: string; message: string } }
+
+export type ExtensionMessage =
+  | SearchTrademarkRequest
+  | GetUsageStatsRequest
+  | SpyOverlayRequest
 
 export type ExtensionResponse<T extends ExtensionMessage> =
   T extends SearchTrademarkRequest ? SearchTrademarkResponse :
   T extends GetUsageStatsRequest ? GetUsageStatsResponse :
+  T extends SpyOverlayRequest ? SpyOverlayResponse :
   never
