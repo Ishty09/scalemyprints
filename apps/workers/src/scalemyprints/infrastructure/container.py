@@ -25,6 +25,28 @@ from scalemyprints.domain.niche.ports import (
     TrendsProvider,
 )
 from scalemyprints.domain.niche.search_service import NicheSearchService
+from scalemyprints.domain.spy.enums import Marketplace
+from scalemyprints.domain.spy.ports import (
+    EmbeddingStore,
+    ImageEmbedder,
+    ListingStore,
+    SpyMarketplaceAdapter,
+)
+from scalemyprints.domain.spy.reverse_image_service import ReverseImageSearchService
+from scalemyprints.domain.spy.search_service import SpySearchService
+from scalemyprints.domain.spy.niche_suggester_service import NicheSuggesterService
+from scalemyprints.domain.spy.seasonality_service import SeasonalityService
+from scalemyprints.domain.spy.shop_audit_service import ShopAuditService
+from scalemyprints.domain.spy.tag_mining_service import TagMiningService
+from scalemyprints.domain.spy.tm_overlay_service import TMOverlayService
+from scalemyprints.domain.spy.velocity_refresh_service import VelocityRefreshService
+from scalemyprints.domain.spy.velocity_service import VelocityAnalyzer as VelocityAnalyzerImpl
+from scalemyprints.domain.spy.viral_mining_service import ViralMiningService
+from scalemyprints.domain.spy.watchlist_service import (
+    AlertStore,
+    WatchlistService,
+    WatchlistStore,
+)
 from scalemyprints.domain.trademark.enums import JurisdictionCode
 from scalemyprints.domain.trademark.ports import (
     CacheStore,
@@ -35,6 +57,69 @@ from scalemyprints.domain.trademark.search_service import TrademarkSearchService
 from scalemyprints.infrastructure.cache.memory import MemoryCache
 from scalemyprints.infrastructure.cache.niche_memory import NicheMemoryCache
 from scalemyprints.infrastructure.common_law.no_op import NoOpCommonLawChecker
+from scalemyprints.infrastructure.image_search.clip_embedder import (
+    CLIPImageEmbedder,
+    StubImageEmbedder,
+)
+from scalemyprints.infrastructure.image_search.memory_store import MemoryEmbeddingStore
+from scalemyprints.infrastructure.image_search.pgvector_store import (
+    SupabasePgvectorStore,
+)
+from scalemyprints.infrastructure.ad_libraries.fb_ad_library import (
+    FacebookAdLibraryAdapter,
+)
+from scalemyprints.infrastructure.llm.pod_readiness_classifier import (
+    HeuristicPODReadinessClassifier,
+    OpenAIPODReadinessClassifier,
+    PODReadinessClassifier,
+)
+from scalemyprints.infrastructure.viral_sources.reddit_trending import (
+    RedditTrendingAdapter,
+)
+from scalemyprints.infrastructure.viral_sources.tiktok_trending import (
+    TikTokTrendingAdapter,
+)
+from scalemyprints.infrastructure.viral_sources.twitter_trending import (
+    TwitterTrendingAdapter,
+)
+from scalemyprints.infrastructure.alert_dispatchers.email_resend import (
+    ResendEmailAlertDispatcher,
+)
+from scalemyprints.infrastructure.alert_dispatchers.in_app import InAppAlertDispatcher
+from scalemyprints.infrastructure.alert_dispatchers.slack import SlackAlertDispatcher
+from scalemyprints.infrastructure.alert_dispatchers.webhook import (
+    WebhookAlertDispatcher,
+)
+from scalemyprints.infrastructure.spy_storage.memory_watchlist_store import (
+    MemoryAlertStore,
+    MemoryApiKeyStore,
+    MemoryWatchlistStore,
+)
+from scalemyprints.infrastructure.spy_storage.supabase_watchlist_store import (
+    SupabaseAlertStore,
+    SupabaseApiKeyStore,
+    SupabaseWatchlistStore,
+)
+from scalemyprints.infrastructure.spy_apis.etsy_spy import EtsySpyAdapter
+from scalemyprints.infrastructure.spy_apis.merch_spy import MerchSpyAdapter
+from scalemyprints.infrastructure.spy_apis.redbubble_spy import RedbubbleSpyAdapter
+from scalemyprints.infrastructure.spy_apis.society6_spy import Society6SpyAdapter
+from scalemyprints.infrastructure.spy_apis.teepublic_spy import TeepublicSpyAdapter
+from scalemyprints.infrastructure.spy_apis.zazzle_spy import ZazzleSpyAdapter
+from scalemyprints.infrastructure.printer_apis.ports import PrinterPriceProvider
+from scalemyprints.infrastructure.printer_apis.printful import PrintfulPriceProvider
+from scalemyprints.infrastructure.printer_apis.printify import PrintifyPriceProvider
+from scalemyprints.infrastructure.spy_storage.hot_movers import (
+    HotMoversProvider,
+    MemoryHotMoversProvider,
+    SupabaseHotMoversProvider,
+)
+from scalemyprints.infrastructure.spy_storage.memory_listing_store import (
+    MemoryListingStore,
+)
+from scalemyprints.infrastructure.spy_storage.supabase_listing_store import (
+    SupabaseListingStore,
+)
 from scalemyprints.infrastructure.llm.niche_expander import OpenAINicheExpander
 from scalemyprints.infrastructure.niche_apis.apify_etsy import ApifyEtsyAdapter
 from scalemyprints.infrastructure.niche_apis.ebay_browse import EbayBrowseAdapter
@@ -98,6 +183,17 @@ class ServiceContainer:
         self._niche_events: EventsProvider = self._build_niche_events()
         self._niche_expander: NicheExpander | None = self._build_niche_expander()
 
+        # ---- Spy ----
+        self._spy_adapters: list[SpyMarketplaceAdapter] = self._build_spy_adapters()
+        self._spy_listing_store: ListingStore = self._build_spy_listing_store()
+        self._spy_embedding_store: EmbeddingStore = self._build_spy_embedding_store()
+        self._spy_image_embedder: ImageEmbedder = self._build_spy_image_embedder()
+        self._spy_hot_movers: HotMoversProvider = self._build_spy_hot_movers()
+        # Phase 4 — singletons. Picks Supabase when storage is configured.
+        self._spy_watchlist_store: WatchlistStore = self._build_spy_watchlist_store()
+        self._spy_alert_store: AlertStore = self._build_spy_alert_store()
+        self._spy_api_key_store = self._build_spy_api_key_store()
+
         logger.info(
             "service_container_initialized",
             cache_provider=self._settings.cache_provider,
@@ -109,6 +205,9 @@ class ServiceContainer:
             niche_marketplace=self._settings.niche_marketplace_provider,
             niche_events=self._settings.niche_events_provider,
             niche_llm=self._settings.niche_llm_provider,
+            spy_storage=self._settings.spy_storage_provider,
+            spy_embedder=self._settings.spy_image_embedder,
+            spy_adapters=[a.marketplace.value for a in self._spy_adapters],
             environment=self._settings.environment.value,
         )
 
@@ -409,6 +508,242 @@ class ServiceContainer:
             events_provider=self._niche_events,
             cache=self._niche_cache,
         )
+
+    # ------------------------------------------------------------------
+    # SPY builders / accessors
+    # ------------------------------------------------------------------
+
+    def _build_spy_adapters(self) -> list[SpyMarketplaceAdapter]:
+        out: list[SpyMarketplaceAdapter] = []
+        proxy = self._settings.spy_proxy_url or None
+
+        if self._settings.spy_etsy_enabled:
+            out.append(EtsySpyAdapter(proxy_url=proxy))
+        if self._settings.spy_merch_enabled:
+            out.append(
+                MerchSpyAdapter(
+                    apify_token=self._settings.apify_api_token.get_secret_value() or None,
+                )
+            )
+        if self._settings.spy_redbubble_enabled:
+            out.append(RedbubbleSpyAdapter(proxy_url=proxy))
+        if self._settings.spy_teepublic_enabled:
+            out.append(TeepublicSpyAdapter(proxy_url=proxy))
+        if self._settings.spy_society6_enabled:
+            out.append(Society6SpyAdapter(proxy_url=proxy))
+        if self._settings.spy_zazzle_enabled:
+            out.append(ZazzleSpyAdapter(proxy_url=proxy))
+        return out
+
+    def _build_spy_listing_store(self) -> ListingStore:
+        if self._settings.spy_storage_provider == "memory":
+            return MemoryListingStore()
+        url = self._settings.supabase_url
+        key = self._settings.supabase_service_role_key.get_secret_value()
+        if not url or not key:
+            logger.warning("spy_listing_store_supabase_creds_missing_falling_back_memory")
+            return MemoryListingStore()
+        return SupabaseListingStore(supabase_url=url, service_role_key=key)
+
+    def _build_spy_embedding_store(self) -> EmbeddingStore:
+        if self._settings.spy_storage_provider == "memory":
+            return MemoryEmbeddingStore()
+        url = self._settings.supabase_url
+        key = self._settings.supabase_service_role_key.get_secret_value()
+        if not url or not key:
+            logger.warning("spy_embedding_store_supabase_creds_missing_falling_back_memory")
+            return MemoryEmbeddingStore()
+        return SupabasePgvectorStore(supabase_url=url, service_role_key=key)
+
+    def _build_spy_image_embedder(self) -> ImageEmbedder:
+        if self._settings.spy_image_embedder == "stub":
+            return StubImageEmbedder()
+        return CLIPImageEmbedder(model_name=self._settings.spy_clip_model)
+
+    def _build_spy_hot_movers(self) -> HotMoversProvider:
+        if self._settings.spy_storage_provider == "memory":
+            return MemoryHotMoversProvider()
+        url = self._settings.supabase_url
+        key = self._settings.supabase_service_role_key.get_secret_value()
+        if not url or not key:
+            return MemoryHotMoversProvider()
+        return SupabaseHotMoversProvider(supabase_url=url, service_role_key=key)
+
+    @property
+    def spy_search_service(self) -> SpySearchService:
+        return SpySearchService(
+            adapters=self._spy_adapters,
+            listing_store=self._spy_listing_store,
+        )
+
+    @property
+    def spy_reverse_image_service(self) -> ReverseImageSearchService:
+        return ReverseImageSearchService(
+            embedder=self._spy_image_embedder,
+            embedding_store=self._spy_embedding_store,
+            listing_store=self._spy_listing_store,
+        )
+
+    @property
+    def spy_listing_store(self) -> ListingStore:
+        return self._spy_listing_store
+
+    @property
+    def spy_hot_movers_provider(self) -> HotMoversProvider:
+        return self._spy_hot_movers
+
+    # ----- Phase 2 services -----
+
+    @property
+    def spy_shop_audit_service(self) -> ShopAuditService:
+        return ShopAuditService(adapters=self._spy_adapters)
+
+    @property
+    def spy_velocity_refresh_service(self) -> VelocityRefreshService:
+        return VelocityRefreshService(
+            adapters=self._spy_adapters,
+            listing_store=self._spy_listing_store,
+            analyzer=VelocityAnalyzerImpl(),
+        )
+
+    @property
+    def spy_fb_ad_library(self) -> FacebookAdLibraryAdapter:
+        return FacebookAdLibraryAdapter(
+            proxy_url=self._settings.spy_proxy_url or None,
+        )
+
+    # ----- Phase 3 services -----
+
+    def _build_pod_readiness_classifier(self) -> PODReadinessClassifier:
+        key = self._settings.openai_api_key.get_secret_value()
+        if not key:
+            return HeuristicPODReadinessClassifier()
+        return OpenAIPODReadinessClassifier(
+            api_key=key,
+            model=self._settings.openai_model_cheap,
+        )
+
+    def _build_viral_sources(self) -> list:
+        sources = []
+        if self._settings.spy_viral_reddit_enabled:
+            sources.append(RedditTrendingAdapter())
+        if self._settings.spy_viral_tiktok_enabled:
+            sources.append(
+                TikTokTrendingAdapter(
+                    proxy_url=self._settings.spy_proxy_url or None,
+                )
+            )
+        if self._settings.spy_viral_twitter_enabled:
+            sources.append(TwitterTrendingAdapter())
+        return sources
+
+    @property
+    def spy_viral_mining_service(self) -> ViralMiningService:
+        return ViralMiningService(
+            sources=self._build_viral_sources(),
+            classifier=self._build_pod_readiness_classifier(),
+        )
+
+    @property
+    def spy_tag_mining_service(self) -> TagMiningService:
+        return TagMiningService(search_service=self.spy_search_service)
+
+    @property
+    def spy_tm_overlay_service(self) -> TMOverlayService:
+        return TMOverlayService(
+            spy_search=self.spy_search_service,
+            trademark_search=self.build_trademark_search_service(),
+        )
+
+    # ----- Phase 4 stores + services -----
+
+    @property
+    def spy_watchlist_store(self) -> WatchlistStore:
+        return self._spy_watchlist_store
+
+    @property
+    def spy_alert_store(self) -> AlertStore:
+        return self._spy_alert_store
+
+    @property
+    def spy_api_key_store(self) -> MemoryApiKeyStore:
+        return self._spy_api_key_store
+
+    @property
+    def spy_watchlist_service(self) -> WatchlistService:
+        signing = self._settings.internal_api_secret.get_secret_value()
+        dispatchers = [
+            InAppAlertDispatcher(),
+            WebhookAlertDispatcher(signing_secret=signing),
+            SlackAlertDispatcher(),
+            ResendEmailAlertDispatcher(),
+        ]
+        return WatchlistService(
+            watchlist_store=self._spy_watchlist_store,
+            alert_store=self._spy_alert_store,
+            dispatchers=dispatchers,
+        )
+
+    @property
+    def spy_niche_suggester_service(self) -> NicheSuggesterService:
+        return NicheSuggesterService(
+            viral_mining=self.spy_viral_mining_service,
+            hot_movers=self.spy_hot_movers_provider,
+            tm_overlay=self.spy_tm_overlay_service,
+        )
+
+    @property
+    def spy_seasonality_service(self) -> SeasonalityService:
+        return SeasonalityService(events_provider=self._niche_events)
+
+    # ----- Phase 4.8 live printer-price providers -----
+
+    @property
+    def spy_printer_price_providers(self) -> dict[str, PrinterPriceProvider]:
+        """Live printer-price provider keyed by `printer_id`.
+
+        Empty dict when nothing is configured — `profit_service.compute`
+        falls back to static tables in that case.
+        """
+        out: dict[str, PrinterPriceProvider] = {}
+        if self._settings.spy_printful_live_enabled:
+            out["printful"] = PrintfulPriceProvider()
+        if self._settings.spy_printify_live_enabled:
+            token = self._settings.printify_api_token.get_secret_value()
+            # We register Printify even without a token so the adapter
+            # can return a structured error response instead of 500.
+            out["printify"] = PrintifyPriceProvider(api_token=token)
+        return out
+
+    # ----- Phase 4.5 store builders -----
+
+    def _build_spy_watchlist_store(self) -> WatchlistStore:
+        if self._settings.spy_storage_provider == "memory":
+            return MemoryWatchlistStore()
+        url = self._settings.supabase_url
+        key = self._settings.supabase_service_role_key.get_secret_value()
+        if not url or not key:
+            logger.warning("spy_watchlist_store_creds_missing_falling_back_memory")
+            return MemoryWatchlistStore()
+        return SupabaseWatchlistStore(supabase_url=url, service_role_key=key)
+
+    def _build_spy_alert_store(self) -> AlertStore:
+        if self._settings.spy_storage_provider == "memory":
+            return MemoryAlertStore()
+        url = self._settings.supabase_url
+        key = self._settings.supabase_service_role_key.get_secret_value()
+        if not url or not key:
+            return MemoryAlertStore()
+        return SupabaseAlertStore(supabase_url=url, service_role_key=key)
+
+    def _build_spy_api_key_store(self):  # returns Memory or Supabase api key store
+        if self._settings.spy_storage_provider == "memory":
+            return MemoryApiKeyStore()
+        url = self._settings.supabase_url
+        key = self._settings.supabase_service_role_key.get_secret_value()
+        if not url or not key:
+            return MemoryApiKeyStore()
+        return SupabaseApiKeyStore(supabase_url=url, service_role_key=key)
 
     # ------------------------------------------------------------------
     # Lifecycle

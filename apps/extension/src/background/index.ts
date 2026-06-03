@@ -23,6 +23,8 @@ import type {
   GetUsageStatsResponse,
   SearchTrademarkRequest,
   SearchTrademarkResponse,
+  SpyOverlayRequest,
+  SpyOverlayResponse,
 } from '@/shared/messages'
 
 // ---------------------------------------------------------------------------
@@ -41,6 +43,8 @@ async function handleMessage(message: ExtensionMessage): Promise<unknown> {
       return handleSearchTrademark(message)
     case 'get_usage_stats':
       return handleGetUsageStats()
+    case 'spy_overlay':
+      return handleSpyOverlay(message)
     default: {
       // Exhaustiveness check — TS will error if a new message type isn't handled
       const _exhaustive: never = message
@@ -141,6 +145,54 @@ async function handleSearchTrademark(
 async function handleGetUsageStats(): Promise<GetUsageStatsResponse> {
   const stats = await getUsageStats()
   return { ok: true, data: stats }
+}
+
+// ---------------------------------------------------------------------------
+// Spy overlay handler — POST /api/v1/spy/tm-overlay
+// ---------------------------------------------------------------------------
+
+async function handleSpyOverlay(
+  message: SpyOverlayRequest,
+): Promise<SpyOverlayResponse> {
+  try {
+    const response = await fetch(`${CONFIG.apiUrl}/api/v1/spy/tm-overlay`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({
+        phrase: message.phrase,
+        marketplaces: [],
+        nice_classes: message.niceClasses ?? [25, 21],
+      }),
+    })
+    const payload = await response.json()
+    if (!payload || typeof payload !== 'object' || !('ok' in payload)) {
+      return {
+        ok: false,
+        error: { code: 'malformed_response', message: 'Server returned unexpected payload' },
+      }
+    }
+    if (payload.ok === false) {
+      return {
+        ok: false,
+        error: {
+          code: payload.error?.code ?? 'unknown_error',
+          message: payload.error?.message ?? 'Request failed',
+        },
+      }
+    }
+    return { ok: true, data: payload.data }
+  } catch (err) {
+    return {
+      ok: false,
+      error: {
+        code: 'network_error',
+        message: err instanceof Error ? err.message : 'Network error',
+      },
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------

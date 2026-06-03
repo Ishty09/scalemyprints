@@ -43,9 +43,24 @@ dependencies = [
     # Utilities
     "python-dateutil>=2.9.0",
     "orjson>=3.10.0",           # Fast JSON
+
+    # Multipart form parsing (Spy reverse-image upload)
+    "python-multipart>=0.0.9",
+
+    # Spy — image pipeline (open-source CLIP + perceptual hash)
+    "pillow>=10.2.0",
+    "imagehash>=4.3.1",
 ]
 
 [project.optional-dependencies]
+# Spy CLIP image embeddings (heavy: torch + transformers ~2GB).
+# Install with: uv sync --extra spy-clip
+spy-clip = [
+    "sentence-transformers>=2.7.0",
+    "torch>=2.2.0",
+    "numpy>=1.26.0",
+]
+
 # Scraping (optional — Phase B+)
 scraping = [
     "playwright>=1.42.0",
