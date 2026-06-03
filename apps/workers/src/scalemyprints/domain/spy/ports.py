@@ -232,6 +232,18 @@ class ListingStore(Protocol):
         limit: int = 200,
     ) -> list[ListingSnapshot]: ...
 
+    async def candidates_for_refresh(
+        self,
+        *,
+        limit: int = 100,
+        max_age_hours: int = 6,
+    ) -> list[tuple[str, Listing]]:
+        """
+        Return (listing_id, Listing) pairs that haven't been refreshed
+        for at least `max_age_hours`. Used by the velocity refresh cron.
+        """
+        ...
+
 
 # -----------------------------------------------------------------------------
 # Velocity service port (so cron + API both call the same surface)

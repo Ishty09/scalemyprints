@@ -1,6 +1,6 @@
 'use client'
 
-import { Flame, Radar, Search, Telescope } from 'lucide-react'
+import { Building2, Calculator, Flame, Radar, Search, Telescope } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
@@ -13,15 +13,17 @@ import type {
 import { MARKETPLACE_LABELS } from '@scalemyprints/contracts'
 
 import { SpyListingCard } from '@/components/app/spy-listing-card'
+import { SpyProfitCalc } from '@/components/app/spy-profit-calc'
 import { SpyReverseImageUploader } from '@/components/app/spy-reverse-image-uploader'
 import { SpySearchForm } from '@/components/app/spy-search-form'
+import { SpyShopAuditPanel } from '@/components/app/spy-shop-audit-panel'
 import {
   useSpyHotMovers,
   useSpyReverseImage,
   useSpySearch,
 } from '@/hooks/use-spy'
 
-type Tab = 'search' | 'reverse' | 'feed'
+type Tab = 'search' | 'reverse' | 'feed' | 'shop' | 'profit'
 
 export default function SpyPage() {
   const [tab, setTab] = useState<Tab>('search')
@@ -51,6 +53,8 @@ export default function SpyPage() {
             { id: 'search', label: 'Search', icon: Search },
             { id: 'reverse', label: 'Reverse Image', icon: Telescope },
             { id: 'feed', label: 'Hot Movers', icon: Flame },
+            { id: 'shop', label: 'Shop Teardown', icon: Building2 },
+            { id: 'profit', label: 'Profit Calc', icon: Calculator },
           ] as { id: Tab; label: string; icon: typeof Search }[]
         ).map((t) => {
           const active = tab === t.id
@@ -141,6 +145,10 @@ export default function SpyPage() {
           )}
         </section>
       )}
+
+      {tab === 'shop' && <SpyShopAuditPanel />}
+
+      {tab === 'profit' && <SpyProfitCalc />}
     </div>
   )
 }

@@ -71,6 +71,23 @@ class MemoryListingStore(ListingStore):
         ordered = sorted(rows, key=lambda s: s.captured_at, reverse=True)
         return ordered[:limit]
 
+    async def candidates_for_refresh(
+        self,
+        *,
+        limit: int = 100,
+        max_age_hours: int = 6,
+    ) -> list[tuple[str, Listing]]:
+        from datetime import UTC, datetime, timedelta
+
+        cutoff = datetime.now(UTC) - timedelta(hours=max_age_hours)
+        rows = [
+            (lid, l)
+            for lid, l in self._listings.items()
+            if l.last_seen_at <= cutoff
+        ]
+        rows.sort(key=lambda t: t[1].last_seen_at)
+        return rows[:limit]
+
     # Test helpers ---------------------------------------------------------
 
     def clear(self) -> None:

@@ -208,3 +208,187 @@ export interface ShopProfileItem {
   reviews_count: number | null
   last_seen_at: string
 }
+
+// ---------------------------------------------------------------------------
+// Shop audit
+// ---------------------------------------------------------------------------
+
+export interface TagFrequencyItem {
+  tag: string
+  count: number
+}
+
+export interface ShopAuditBody {
+  marketplace: Marketplace
+  handle: string
+  depth?: 'shallow' | 'standard' | 'deep'
+}
+
+export interface ShopAuditResponse {
+  shop: ShopProfileItem
+  depth: string
+  listings_sampled: number
+  est_monthly_revenue_usd: number | null
+  avg_price_usd: number | null
+  new_listings_last_30d: number | null
+  restock_cadence_days: number | null
+  top_listings: SpyListingItem[]
+  most_used_tags: TagFrequencyItem[]
+  captured_at: string
+  error: string | null
+}
+
+// ---------------------------------------------------------------------------
+// Saturation / difficulty score
+// ---------------------------------------------------------------------------
+
+export interface SaturationBody {
+  phrase?: string | null
+  listing_ids?: string[]
+  marketplaces?: Marketplace[]
+  use_live_search?: boolean
+}
+
+export interface SaturationResponse {
+  score: number              // 0-100
+  saturation_class: SaturationClass
+  listings_count: number
+  unique_shops: number
+  hhi: number
+  gmv_pool_usd: number
+  density_component: number
+  concentration_component: number
+  velocity_component: number
+  recency_component: number
+  explanation: string
+}
+
+// ---------------------------------------------------------------------------
+// Profit calculator
+// ---------------------------------------------------------------------------
+
+export type ProductType =
+  | 't_shirt'
+  | 'tank_top'
+  | 'long_sleeve'
+  | 'hoodie'
+  | 'sweatshirt'
+  | 'mug_11oz'
+  | 'mug_15oz'
+  | 'tote_bag'
+  | 'phone_case'
+  | 'poster_18x24'
+  | 'sticker'
+  | 'blanket_50x60'
+  | 'pillow_18x18'
+
+export type PrinterId =
+  | 'printful'
+  | 'printify'
+  | 'gelato'
+  | 'customcat'
+  | 'spod'
+
+export const PRINTERS: readonly PrinterId[] = [
+  'printify',
+  'printful',
+  'gelato',
+  'customcat',
+  'spod',
+] as const
+
+export const PRINTER_LABELS: Record<PrinterId, string> = {
+  printify: 'Printify',
+  printful: 'Printful',
+  gelato: 'Gelato',
+  customcat: 'CustomCat',
+  spod: 'SPOD',
+}
+
+export const PRODUCT_LABELS: Record<ProductType, string> = {
+  t_shirt: 'T-Shirt',
+  tank_top: 'Tank Top',
+  long_sleeve: 'Long Sleeve',
+  hoodie: 'Hoodie',
+  sweatshirt: 'Sweatshirt',
+  mug_11oz: 'Mug (11oz)',
+  mug_15oz: 'Mug (15oz)',
+  tote_bag: 'Tote Bag',
+  phone_case: 'Phone Case',
+  poster_18x24: 'Poster (18×24)',
+  sticker: 'Sticker',
+  blanket_50x60: 'Blanket (50×60)',
+  pillow_18x18: 'Pillow (18×18)',
+}
+
+export interface ProfitBody {
+  marketplace: Marketplace
+  product_type: ProductType
+  sale_price_usd: number
+  printer?: PrinterId
+  shipping_usd?: number
+  ad_cpc_usd?: number
+  ad_conversion_rate?: number
+}
+
+export interface ProfitResponse {
+  sale_price_usd: number
+  base_cost_usd: number
+  marketplace_fee_usd: number
+  shipping_usd: number
+  ad_cost_usd: number
+  profit_usd: number
+  margin_pct: number
+  printer: PrinterId
+  note: string | null
+}
+
+// ---------------------------------------------------------------------------
+// Ad library
+// ---------------------------------------------------------------------------
+
+export type AdPlatform =
+  | 'facebook'
+  | 'instagram'
+  | 'tiktok'
+  | 'pinterest'
+  | 'google_ads'
+
+export interface AdSpyHitItem {
+  platform: AdPlatform
+  ad_id: string
+  page_or_handle: string
+  page_id: string | null
+  primary_text: string | null
+  cta: string | null
+  landing_url: string | null
+  started_at: string | null
+  last_seen_at: string | null
+  impressions_lower: number | null
+  impressions_upper: number | null
+  countries: string[]
+}
+
+export interface AdLibraryResponse {
+  platform: AdPlatform
+  hits: AdSpyHitItem[]
+  total: number
+  duration_ms: number
+  error: string | null
+}
+
+// ---------------------------------------------------------------------------
+// Velocity refresh (cron-only)
+// ---------------------------------------------------------------------------
+
+export interface VelocityRefreshResponse {
+  started_at: string
+  completed_at: string
+  duration_ms: number
+  candidates: number
+  refreshed: number
+  failed: number
+  spikes_detected: number
+  by_marketplace: Record<string, number>
+  errors: string[]
+}
