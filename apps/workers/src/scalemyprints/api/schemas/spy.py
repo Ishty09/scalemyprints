@@ -364,5 +364,95 @@ class VelocityRefreshResponse(BaseModel):
     spikes_detected: int
     by_marketplace: dict[str, int]
     errors: list[str]
+
+
+# ---------------------------------------------------------------------------
+# GET /api/v1/spy/viral-feed
+# ---------------------------------------------------------------------------
+
+
+class ViralSignalItem(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    source: str
+    source_url: HttpUrl | None
+    phrase: str
+    detected_at: datetime
+    engagement: int
+    momentum_score: int
+    pod_readiness_score: int
+    existing_pod_count: int
+    suggested_styles: list[str]
+    note: str | None
+
+
+class ViralFeedResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    signals: list[ViralSignalItem]
+    sources_used: list[str]
+    sources_failed: list[dict[str, str]]
+    total: int
+    duration_ms: int
+
+
+# ---------------------------------------------------------------------------
+# POST /api/v1/spy/tag-mine
+# ---------------------------------------------------------------------------
+
+
+class TagMineBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    seed: str = Field(min_length=1, max_length=200)
+    marketplaces: list[Marketplace] = Field(default_factory=list)
+    per_marketplace_limit: int = Field(default=50, ge=1, le=100)
+    top_n: int = Field(default=40, ge=1, le=200)
+
+
+class MinedTagItem(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    tag: str
+    total_count: int
+    by_marketplace: dict[str, int]
+    distinct_marketplaces: int
+    sample_listings: list[str]
+
+
+class TagMineResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    seed: str
+    tags: list[MinedTagItem]
+    total_listings_scanned: int
+    duration_ms: int
+
+
+# ---------------------------------------------------------------------------
+# POST /api/v1/spy/tm-overlay
+# ---------------------------------------------------------------------------
+
+
+class TMOverlayBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    phrase: str = Field(min_length=2, max_length=200)
+    marketplaces: list[Marketplace] = Field(default_factory=list)
+    nice_classes: list[int] = Field(default_factory=lambda: [25, 21])
+
+
+class TMOverlayResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    phrase: str
+    opportunity_score: int
+    risk_score: int
+    saturation_score: int
+    combined_verdict: str
+    listings_count: int
+    est_monthly_gmv_usd: float
+    trademark: dict[str, object]
+    duration_ms: int
     reviews_count: int | None
     last_seen_at: datetime

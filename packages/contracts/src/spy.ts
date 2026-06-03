@@ -392,3 +392,84 @@ export interface VelocityRefreshResponse {
   by_marketplace: Record<string, number>
   errors: string[]
 }
+
+// ---------------------------------------------------------------------------
+// Phase 3 — viral mining, tag mining, TM overlay
+// ---------------------------------------------------------------------------
+
+export interface ViralSignalItem {
+  source: ViralSource
+  source_url: string | null
+  phrase: string
+  detected_at: string
+  engagement: number
+  momentum_score: number
+  pod_readiness_score: number
+  existing_pod_count: number
+  suggested_styles: string[]
+  note: string | null
+}
+
+export interface ViralFeedResponse {
+  signals: ViralSignalItem[]
+  sources_used: string[]
+  sources_failed: { source: string; error: string }[]
+  total: number
+  duration_ms: number
+}
+
+export interface TagMineBody {
+  seed: string
+  marketplaces?: Marketplace[]
+  per_marketplace_limit?: number
+  top_n?: number
+}
+
+export interface MinedTagItem {
+  tag: string
+  total_count: number
+  by_marketplace: Record<string, number>
+  distinct_marketplaces: number
+  sample_listings: string[]
+}
+
+export interface TagMineResponse {
+  seed: string
+  tags: MinedTagItem[]
+  total_listings_scanned: number
+  duration_ms: number
+}
+
+export interface TMOverlayBody {
+  phrase: string
+  marketplaces?: Marketplace[]
+  nice_classes?: number[]
+}
+
+export type TMOverlayVerdict = 'go' | 'caution' | 'block'
+
+export interface TMOverlayResponse {
+  phrase: string
+  opportunity_score: number
+  risk_score: number
+  saturation_score: number
+  combined_verdict: TMOverlayVerdict
+  listings_count: number
+  est_monthly_gmv_usd: number
+  trademark: {
+    overall_risk_level: string
+    overall_risk_score: number
+    jurisdictions: {
+      code: string
+      risk_score: number
+      risk_level: string
+      match_count: number
+      error: string | null
+    }[]
+    recommendations: {
+      severity: string
+      message: string
+    }[]
+  }
+  duration_ms: number
+}

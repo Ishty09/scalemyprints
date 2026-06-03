@@ -1,6 +1,14 @@
 'use client'
 
-import { Building2, Calculator, Flame, Radar, Search, Telescope } from 'lucide-react'
+import {
+  Building2,
+  Calculator,
+  Flame,
+  Radar,
+  Search,
+  Sparkles,
+  Telescope,
+} from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
@@ -17,13 +25,14 @@ import { SpyProfitCalc } from '@/components/app/spy-profit-calc'
 import { SpyReverseImageUploader } from '@/components/app/spy-reverse-image-uploader'
 import { SpySearchForm } from '@/components/app/spy-search-form'
 import { SpyShopAuditPanel } from '@/components/app/spy-shop-audit-panel'
+import { SpyViralFeed } from '@/components/app/spy-viral-feed'
 import {
   useSpyHotMovers,
   useSpyReverseImage,
   useSpySearch,
 } from '@/hooks/use-spy'
 
-type Tab = 'search' | 'reverse' | 'feed' | 'shop' | 'profit'
+type Tab = 'search' | 'reverse' | 'feed' | 'shop' | 'profit' | 'viral'
 
 export default function SpyPage() {
   const [tab, setTab] = useState<Tab>('search')
@@ -55,6 +64,7 @@ export default function SpyPage() {
             { id: 'feed', label: 'Hot Movers', icon: Flame },
             { id: 'shop', label: 'Shop Teardown', icon: Building2 },
             { id: 'profit', label: 'Profit Calc', icon: Calculator },
+            { id: 'viral', label: 'Viral Feed', icon: Sparkles },
           ] as { id: Tab; label: string; icon: typeof Search }[]
         ).map((t) => {
           const active = tab === t.id
@@ -149,6 +159,8 @@ export default function SpyPage() {
       {tab === 'shop' && <SpyShopAuditPanel />}
 
       {tab === 'profit' && <SpyProfitCalc />}
+
+      {tab === 'viral' && <SpyViralFeed />}
     </div>
   )
 }
