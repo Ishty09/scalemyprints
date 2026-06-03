@@ -197,6 +197,10 @@ class Settings(BaseSettings):
     spy_teepublic_enabled: bool = True
     spy_society6_enabled: bool = True
     spy_zazzle_enabled: bool = True
+    # Phase 4.8 live printer prices
+    spy_printful_live_enabled: bool = True
+    spy_printify_live_enabled: bool = True
+    printify_api_token: SecretStr = Field(default=SecretStr(""))
 
     # ---------------- Validators ----------------
 

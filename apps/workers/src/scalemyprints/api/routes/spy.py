@@ -67,6 +67,8 @@ from scalemyprints.api.schemas.spy import (
     TMOverlayResponse,
     DeliverAlertsBody,
     DeliverAlertsResponse,
+    LivePriceQuoteItem,
+    PrinterPricesResponse,
     VelocityRefreshBody,
     VelocityRefreshResponse,
     ViralFeedResponse,
@@ -382,9 +384,23 @@ async def spy_saturation(
 async def spy_profit(
     payload: ProfitBody,
     user: Annotated[CurrentUser, Depends(get_current_user)],
+    container: Annotated[ServiceContainer, Depends(get_service_container)],
 ) -> ApiSuccess[ProfitResponse]:
     """Per-unit profit math for a POD listing."""
     bind_request_context(user_id=user.id)
+
+    # Phase 4.8 — try the live printer-price provider before falling
+    # back to the static 2026-Q2 table.
+    live_quote: float | None = None
+    provider = container.spy_printer_price_providers.get(payload.printer)
+    if provider is not None:
+        try:
+            q = await provider.quote(payload.product_type)
+            if not q.error and q.base_cost_usd > 0:
+                live_quote = q.base_cost_usd
+        except Exception as e:
+            logger.warning("live_printer_quote_failed", error=str(e))
+
     breakdown = profit_service.compute(
         ProfitInput(
             marketplace=payload.marketplace,
@@ -394,7 +410,8 @@ async def spy_profit(
             shipping_usd=payload.shipping_usd,
             ad_cpc_usd=payload.ad_cpc_usd,
             ad_conversion_rate=payload.ad_conversion_rate,
-        )
+        ),
+        live_base_cost_usd=live_quote,
     )
     return success(
         ProfitResponse(
@@ -1048,4 +1065,48 @@ async def spy_deliver_alerts(
             failed=result.failed,
             by_channel=result.by_channel,
         )
+    )
+
+
+# ---------------------------------------------------------------------------
+# GET /printer-prices — live quotes for one product_type
+# ---------------------------------------------------------------------------
+
+
+@router.get(
+    "/printer-prices",
+    response_model=ApiSuccess[PrinterPricesResponse],
+)
+async def spy_printer_prices(
+    user: Annotated[CurrentUser, Depends(get_current_user)],
+    container: Annotated[ServiceContainer, Depends(get_service_container)],
+    product_type: Annotated[str, Query(min_length=1, max_length=40)] = "t_shirt",
+) -> ApiSuccess[PrinterPricesResponse]:
+    """Live base-cost quotes for all configured printers + a single product."""
+    bind_request_context(user_id=user.id)
+    providers = container.spy_printer_price_providers
+    quotes: list[LivePriceQuoteItem] = []
+    for printer_id, provider in providers.items():
+        try:
+            q = await provider.quote(product_type)
+        except Exception as e:
+            logger.warning(
+                "printer_price_route_failed",
+                printer=printer_id,
+                error=str(e),
+            )
+            continue
+        quotes.append(
+            LivePriceQuoteItem(
+                printer=q.printer,
+                product_type=q.product_type,
+                base_cost_usd=q.base_cost_usd,
+                currency=q.currency,
+                source_url=q.source_url,
+                fetched_at=q.fetched_at,
+                error=q.error,
+            )
+        )
+    return success(
+        PrinterPricesResponse(product_type=product_type, quotes=quotes),
     )

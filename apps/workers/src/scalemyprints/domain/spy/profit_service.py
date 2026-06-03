@@ -133,12 +133,26 @@ class ProfitBreakdown(BaseModel):
     note: str | None = None
 
 
-def compute(payload: ProfitInput) -> ProfitBreakdown:
-    """Per-unit profit math. Pure — no I/O."""
-    base = _BASE_COSTS_USD.get(payload.product_type, {}).get(payload.printer)
-    if base is None:
-        # Fall back to printify's price for this product type if available
-        base = _BASE_COSTS_USD.get(payload.product_type, {}).get("printify", 0.0)
+def compute(
+    payload: ProfitInput,
+    *,
+    live_base_cost_usd: float | None = None,
+) -> ProfitBreakdown:
+    """
+    Per-unit profit math. Pure — no I/O.
+
+    If `live_base_cost_usd` is provided (typically pulled by the caller
+    from `PrinterPriceProvider.quote()` before invoking us), it
+    overrides the static table. Otherwise we use the Phase 2 static
+    table indexed by (product_type, printer).
+    """
+    if live_base_cost_usd is not None and live_base_cost_usd > 0:
+        base = float(live_base_cost_usd)
+    else:
+        base = _BASE_COSTS_USD.get(payload.product_type, {}).get(payload.printer)
+        if base is None:
+            # Fall back to printify's price for this product type if available
+            base = _BASE_COSTS_USD.get(payload.product_type, {}).get("printify", 0.0)
 
     fee_fn = _MARKETPLACE_FEE_FN.get(payload.marketplace)
     if fee_fn is None:
@@ -165,6 +179,8 @@ def compute(payload: ProfitInput) -> ProfitBreakdown:
     note: str | None = None
     if base == 0:
         note = "unsupported product_type — using $0 base cost"
+    if live_base_cost_usd is not None and live_base_cost_usd > 0:
+        note = (note or "") + ("; " if note else "") + "base_cost via live printer API"
     if margin_pct < 0:
         note = (note or "") + ("; " if note else "") + "negative margin — review price or ad spend"
 

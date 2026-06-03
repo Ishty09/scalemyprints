@@ -633,3 +633,25 @@ class DeliverAlertsResponse(BaseModel):
     delivered: int
     failed: int
     by_channel: dict[str, int]
+
+
+# ---------------------------------------------------------------------------
+# GET /api/v1/spy/printer-prices  (live quote for one product_type)
+# ---------------------------------------------------------------------------
+
+
+class LivePriceQuoteItem(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    printer: str
+    product_type: str
+    base_cost_usd: float
+    currency: str
+    source_url: str | None
+    fetched_at: str
+    error: str | None
+
+
+class PrinterPricesResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    product_type: str
+    quotes: list[LivePriceQuoteItem]

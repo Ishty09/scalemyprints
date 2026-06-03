@@ -106,6 +106,9 @@ from scalemyprints.infrastructure.spy_apis.redbubble_spy import RedbubbleSpyAdap
 from scalemyprints.infrastructure.spy_apis.society6_spy import Society6SpyAdapter
 from scalemyprints.infrastructure.spy_apis.teepublic_spy import TeepublicSpyAdapter
 from scalemyprints.infrastructure.spy_apis.zazzle_spy import ZazzleSpyAdapter
+from scalemyprints.infrastructure.printer_apis.ports import PrinterPriceProvider
+from scalemyprints.infrastructure.printer_apis.printful import PrintfulPriceProvider
+from scalemyprints.infrastructure.printer_apis.printify import PrintifyPriceProvider
 from scalemyprints.infrastructure.spy_storage.hot_movers import (
     HotMoversProvider,
     MemoryHotMoversProvider,
@@ -692,6 +695,25 @@ class ServiceContainer:
     @property
     def spy_seasonality_service(self) -> SeasonalityService:
         return SeasonalityService(events_provider=self._niche_events)
+
+    # ----- Phase 4.8 live printer-price providers -----
+
+    @property
+    def spy_printer_price_providers(self) -> dict[str, PrinterPriceProvider]:
+        """Live printer-price provider keyed by `printer_id`.
+
+        Empty dict when nothing is configured — `profit_service.compute`
+        falls back to static tables in that case.
+        """
+        out: dict[str, PrinterPriceProvider] = {}
+        if self._settings.spy_printful_live_enabled:
+            out["printful"] = PrintfulPriceProvider()
+        if self._settings.spy_printify_live_enabled:
+            token = self._settings.printify_api_token.get_secret_value()
+            # We register Printify even without a token so the adapter
+            # can return a structured error response instead of 500.
+            out["printify"] = PrintifyPriceProvider(api_token=token)
+        return out
 
     # ----- Phase 4.5 store builders -----
 
