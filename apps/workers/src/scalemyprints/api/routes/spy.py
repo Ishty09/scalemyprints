@@ -33,6 +33,7 @@ from scalemyprints.api.schemas.spy import (
     AdLibraryResponse,
     AdSpyHitItem,
     HotMoversResponse,
+    MinedTagItem,
     ProfitBody,
     ProfitResponse,
     ReverseImageMatchItem,
@@ -46,8 +47,14 @@ from scalemyprints.api.schemas.spy import (
     SpySearchBody,
     SpySearchResponse,
     TagFrequencyItem,
+    TagMineBody,
+    TagMineResponse,
+    TMOverlayBody,
+    TMOverlayResponse,
     VelocityRefreshBody,
     VelocityRefreshResponse,
+    ViralFeedResponse,
+    ViralSignalItem,
 )
 from scalemyprints.core.config import get_settings
 from scalemyprints.core.logging import bind_request_context, get_logger
@@ -488,5 +495,155 @@ async def spy_refresh_velocity(
             spikes_detected=summary.spikes_detected,
             by_marketplace=summary.by_marketplace,
             errors=summary.errors,
+        )
+    )
+
+
+# ---------------------------------------------------------------------------
+# GET /viral-feed
+# ---------------------------------------------------------------------------
+
+
+@router.get(
+    "/viral-feed",
+    response_model=ApiSuccess[ViralFeedResponse],
+)
+async def spy_viral_feed(
+    user: Annotated[CurrentUser, Depends(get_current_user)],
+    container: Annotated[ServiceContainer, Depends(get_service_container)],
+    min_pod_readiness: Annotated[int, Query(ge=0, le=100)] = 50,
+    classify: Annotated[bool, Query()] = True,
+    limit: Annotated[int, Query(ge=1, le=200)] = 60,
+) -> ApiSuccess[ViralFeedResponse]:
+    """Live viral-mining feed: Reddit + TikTok + Twitter trending, scored by POD readiness."""
+    bind_request_context(user_id=user.id)
+    service = container.spy_viral_mining_service
+    result = await service.run(
+        per_source_limit=30,
+        total_limit=limit,
+        min_pod_readiness=min_pod_readiness,
+        classify=classify,
+    )
+    return success(
+        ViralFeedResponse(
+            signals=[
+                ViralSignalItem(
+                    source=s.source.value,
+                    source_url=s.source_url,
+                    phrase=s.phrase,
+                    detected_at=s.detected_at,
+                    engagement=s.engagement,
+                    momentum_score=s.momentum_score,
+                    pod_readiness_score=s.pod_readiness_score,
+                    existing_pod_count=s.existing_pod_count,
+                    suggested_styles=s.suggested_styles,
+                    note=s.note,
+                )
+                for s in result.signals
+            ],
+            sources_used=result.sources_used,
+            sources_failed=[
+                {"source": src, "error": err} for src, err in result.sources_failed
+            ],
+            total=len(result.signals),
+            duration_ms=result.duration_ms,
+        )
+    )
+
+
+# ---------------------------------------------------------------------------
+# POST /tag-mine
+# ---------------------------------------------------------------------------
+
+
+@router.post(
+    "/tag-mine",
+    response_model=ApiSuccess[TagMineResponse],
+)
+async def spy_tag_mine(
+    payload: TagMineBody,
+    user: Annotated[CurrentUser, Depends(get_current_user)],
+    container: Annotated[ServiceContainer, Depends(get_service_container)],
+    limiter: Annotated[RateLimiter, Depends(get_rate_limiter)],
+) -> ApiSuccess[TagMineResponse]:
+    """Cross-marketplace tag harvester."""
+    settings = get_settings()
+    bind_request_context(user_id=user.id)
+    await limiter.check(
+        key=f"user:{user.id}:spy:tag_mine",
+        limit=settings.rate_limit_per_minute,
+        window_seconds=60,
+    )
+
+    service = container.spy_tag_mining_service
+    result = await service.mine(
+        seed=payload.seed,
+        marketplaces=payload.marketplaces,
+        per_marketplace_limit=payload.per_marketplace_limit,
+        top_n=payload.top_n,
+    )
+    return success(
+        TagMineResponse(
+            seed=result.seed,
+            tags=[
+                MinedTagItem(
+                    tag=t.tag,
+                    total_count=t.total_count,
+                    by_marketplace=t.by_marketplace,
+                    distinct_marketplaces=t.distinct_marketplaces,
+                    sample_listings=t.sample_listings,
+                )
+                for t in result.tags
+            ],
+            total_listings_scanned=result.total_listings_scanned,
+            duration_ms=result.duration_ms,
+        )
+    )
+
+
+# ---------------------------------------------------------------------------
+# POST /tm-overlay
+# ---------------------------------------------------------------------------
+
+
+@router.post(
+    "/tm-overlay",
+    response_model=ApiSuccess[TMOverlayResponse],
+)
+async def spy_tm_overlay(
+    payload: TMOverlayBody,
+    user: Annotated[CurrentUser, Depends(get_current_user)],
+    container: Annotated[ServiceContainer, Depends(get_service_container)],
+    limiter: Annotated[RateLimiter, Depends(get_rate_limiter)],
+) -> ApiSuccess[TMOverlayResponse]:
+    """
+    Fuse Spy and Trademark modules for a phrase: returns opportunity
+    score + risk score + verdict for one-shot go/caution/block.
+    """
+    settings = get_settings()
+    bind_request_context(user_id=user.id)
+    await limiter.check(
+        key=f"user:{user.id}:spy:tm_overlay",
+        limit=settings.rate_limit_per_minute,
+        window_seconds=60,
+    )
+
+    service = container.spy_tm_overlay_service
+    overlay = await service.overlay(
+        phrase=payload.phrase,
+        marketplaces=payload.marketplaces,
+        nice_classes=payload.nice_classes,
+    )
+    return success(
+        TMOverlayResponse(
+            phrase=overlay.phrase,
+            opportunity_score=overlay.opportunity_score,
+            risk_score=overlay.risk_score,
+            saturation_score=overlay.saturation_score,
+            combined_verdict=overlay.combined_verdict,
+            listings_count=overlay.listings_count,
+            est_monthly_gmv_usd=overlay.est_monthly_gmv_usd,
+            trademark=overlay.trademark,
+            duration_ms=overlay.duration_ms,
         )
     )

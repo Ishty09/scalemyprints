@@ -12,6 +12,7 @@
 
 import type {
   JurisdictionRisk,
+  TMOverlayResponse,
   TrademarkSearchResponse,
 } from '@scalemyprints/contracts'
 
@@ -19,6 +20,8 @@ import { CONFIG } from '@/shared/config'
 import type {
   SearchTrademarkRequest,
   SearchTrademarkResponse,
+  SpyOverlayRequest,
+  SpyOverlayResponse,
 } from '@/shared/messages'
 
 import { detectListing, type ListingInfo } from './detect-listing'
@@ -86,19 +89,59 @@ function mount(listing: ListingInfo) {
   const shadow = host.attachShadow({ mode: 'open' })
   shadow.innerHTML = renderInitialWidget(listing)
 
-  // Wire up click handler
+  // Wire up TM tab (default view)
   const button = shadow.getElementById('smp-check-btn')
   button?.addEventListener('click', () => handleCheck(shadow, listing))
+
+  // Wire up tab switching
+  const tmTab = shadow.getElementById('smp-tab-tm')
+  const spyTab = shadow.getElementById('smp-tab-spy')
+  tmTab?.addEventListener('click', () => switchTab(shadow, listing, 'tm'))
+  spyTab?.addEventListener('click', () => switchTab(shadow, listing, 'spy'))
+}
+
+type TabKey = 'tm' | 'spy'
+
+function switchTab(shadow: ShadowRoot, listing: ListingInfo, tab: TabKey) {
+  const body = shadow.getElementById('smp-body')
+  if (!body) return
+
+  const tmTab = shadow.getElementById('smp-tab-tm')
+  const spyTab = shadow.getElementById('smp-tab-spy')
+  tmTab?.classList.toggle('active', tab === 'tm')
+  tmTab?.setAttribute('aria-selected', String(tab === 'tm'))
+  spyTab?.classList.toggle('active', tab === 'spy')
+  spyTab?.setAttribute('aria-selected', String(tab === 'spy'))
+
+  if (tab === 'tm') {
+    body.innerHTML = `
+      <p class="phrase">${escapeHtml(truncate(listing.title, 80))}</p>
+      <button class="primary-btn" id="smp-check-btn">⚡ Check trademark risk</button>
+      <p class="hint">${CONFIG.freeSearchesPerDay} free checks/day.</p>
+    `
+    shadow.getElementById('smp-check-btn')?.addEventListener('click', () => handleCheck(shadow, listing))
+  } else {
+    body.innerHTML = `
+      <p class="phrase">${escapeHtml(truncate(listing.title, 80))}</p>
+      <button class="primary-btn" id="smp-spy-btn">🔭 Run Spy Mode</button>
+      <p class="hint">TM risk + opportunity + saturation in one shot.</p>
+    `
+    shadow.getElementById('smp-spy-btn')?.addEventListener('click', () => handleSpy(shadow, listing))
+  }
 }
 
 function renderInitialWidget(listing: ListingInfo): string {
   return `
     <style>${WIDGET_STYLES}</style>
-    <div id="${WIDGET_ID}" class="widget" role="region" aria-label="Trademark check">
+    <div id="${WIDGET_ID}" class="widget" role="region" aria-label="ScaleMyPrints widget">
       <div class="header">
         <span class="logo">SMP</span>
-        <span class="title">Trademark Check</span>
+        <span class="title">ScaleMyPrints</span>
         <button class="close" id="smp-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="tabs" role="tablist">
+        <button class="tab active" id="smp-tab-tm" role="tab" aria-selected="true">🛡️ TM Check</button>
+        <button class="tab" id="smp-tab-spy" role="tab" aria-selected="false">🔭 Spy</button>
       </div>
       <div class="body" id="smp-body">
         <p class="phrase">${escapeHtml(truncate(listing.title, 80))}</p>
@@ -209,6 +252,92 @@ function renderJurisdictionPill(j: JurisdictionRisk): string {
   const score = j.risk_score
   const color = score < 30 ? '#10b981' : score < 60 ? '#f59e0b' : '#ef4444'
   return `<span class="juris" style="--c: ${color}">${j.code}: ${score}</span>`
+}
+
+// ---------------------------------------------------------------------------
+// Spy Mode handler
+// ---------------------------------------------------------------------------
+
+async function handleSpy(shadow: ShadowRoot, listing: ListingInfo) {
+  const body = shadow.getElementById('smp-body')
+  if (!body) return
+
+  body.innerHTML = `
+    <div class="loading">
+      <div class="spinner" aria-hidden="true"></div>
+      <p>Scanning marketplaces + trademarks…</p>
+    </div>
+  `
+
+  const message: SpyOverlayRequest = {
+    type: 'spy_overlay',
+    phrase: listing.title,
+    niceClasses: listing.niceClasses,
+  }
+
+  let response: SpyOverlayResponse
+  try {
+    response = (await chrome.runtime.sendMessage(message)) as SpyOverlayResponse
+  } catch {
+    body.innerHTML = renderError('extension_error', 'Could not reach the extension service')
+    return
+  }
+
+  if (!response.ok) {
+    body.innerHTML = renderError(response.error.code, response.error.message)
+    return
+  }
+
+  body.innerHTML = renderSpyResult(response.data)
+}
+
+function renderSpyResult(result: TMOverlayResponse): string {
+  const verdictColors: Record<string, string> = {
+    go: '#10b981',
+    caution: '#f59e0b',
+    block: '#ef4444',
+  }
+  const verdictIcons: Record<string, string> = {
+    go: '🟢',
+    caution: '🟡',
+    block: '🔴',
+  }
+  const color = verdictColors[result.combined_verdict] ?? '#64748b'
+  const icon = verdictIcons[result.combined_verdict] ?? '•'
+
+  const gmv =
+    result.est_monthly_gmv_usd >= 1000
+      ? `$${(result.est_monthly_gmv_usd / 1000).toFixed(1)}k/mo`
+      : `$${result.est_monthly_gmv_usd.toFixed(0)}/mo`
+
+  return `
+    <div class="spy-result" style="--accent: ${color}">
+      <div class="spy-verdict-row">
+        <span class="spy-verdict-icon">${icon}</span>
+        <span class="spy-verdict-label">${escapeHtml(result.combined_verdict.toUpperCase())}</span>
+      </div>
+      <div class="spy-stats">
+        <div class="spy-stat">
+          <div class="spy-stat-num">${result.opportunity_score}</div>
+          <div class="spy-stat-lab">Opportunity</div>
+        </div>
+        <div class="spy-stat">
+          <div class="spy-stat-num">${result.risk_score}</div>
+          <div class="spy-stat-lab">TM risk</div>
+        </div>
+        <div class="spy-stat">
+          <div class="spy-stat-num">${result.saturation_score}</div>
+          <div class="spy-stat-lab">Saturation</div>
+        </div>
+      </div>
+      <div class="spy-context">
+        <span>${result.listings_count} listings · ${escapeHtml(gmv)} GMV</span>
+      </div>
+      <a class="result-cta" href="${CONFIG.marketingUrl}/dashboard/spy" target="_blank" rel="noopener noreferrer">
+        Open Spy dashboard →
+      </a>
+    </div>
+  `
 }
 
 function renderError(code: string, message: string): string {
@@ -386,6 +515,68 @@ const WIDGET_STYLES = `
   }
   .error .primary-btn-link { background: #dc2626; }
   .error .primary-btn-link:hover { background: #b91c1c; }
+
+  /* ---- Tabs ---- */
+  .tabs {
+    display: flex;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .tab {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 8px 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color 120ms ease, border-color 120ms ease;
+  }
+  .tab:hover { color: #0f172a; }
+  .tab.active {
+    color: #0d9488;
+    border-bottom-color: #0d9488;
+    background: #fff;
+  }
+
+  /* ---- Spy result ---- */
+  .spy-result {
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .spy-verdict-row {
+    display: flex; align-items: center; gap: 8px;
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.04em;
+  }
+  .spy-verdict-icon { font-size: 18px; }
+  .spy-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+  }
+  .spy-stat {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 4px;
+    text-align: center;
+  }
+  .spy-stat-num {
+    font-size: 22px; font-weight: 700; color: #0f172a;
+  }
+  .spy-stat-lab {
+    font-size: 10px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .spy-context {
+    font-size: 12px; color: #64748b; text-align: center;
+  }
 `
 
 // Wire up close button (delegated, since shadow root is created above)
