@@ -189,6 +189,10 @@ class Settings(BaseSettings):
     spy_redbubble_enabled: bool = True
     # Optional residential proxy URL applied to every direct scrape adapter
     spy_proxy_url: str = ""
+    # Phase 3 viral source toggles
+    spy_viral_reddit_enabled: bool = True
+    spy_viral_tiktok_enabled: bool = True
+    spy_viral_twitter_enabled: bool = True
 
     # ---------------- Validators ----------------
 

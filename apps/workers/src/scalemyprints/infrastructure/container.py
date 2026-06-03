@@ -35,8 +35,11 @@ from scalemyprints.domain.spy.ports import (
 from scalemyprints.domain.spy.reverse_image_service import ReverseImageSearchService
 from scalemyprints.domain.spy.search_service import SpySearchService
 from scalemyprints.domain.spy.shop_audit_service import ShopAuditService
+from scalemyprints.domain.spy.tag_mining_service import TagMiningService
+from scalemyprints.domain.spy.tm_overlay_service import TMOverlayService
 from scalemyprints.domain.spy.velocity_refresh_service import VelocityRefreshService
 from scalemyprints.domain.spy.velocity_service import VelocityAnalyzer as VelocityAnalyzerImpl
+from scalemyprints.domain.spy.viral_mining_service import ViralMiningService
 from scalemyprints.domain.trademark.enums import JurisdictionCode
 from scalemyprints.domain.trademark.ports import (
     CacheStore,
@@ -57,6 +60,20 @@ from scalemyprints.infrastructure.image_search.pgvector_store import (
 )
 from scalemyprints.infrastructure.ad_libraries.fb_ad_library import (
     FacebookAdLibraryAdapter,
+)
+from scalemyprints.infrastructure.llm.pod_readiness_classifier import (
+    HeuristicPODReadinessClassifier,
+    OpenAIPODReadinessClassifier,
+    PODReadinessClassifier,
+)
+from scalemyprints.infrastructure.viral_sources.reddit_trending import (
+    RedditTrendingAdapter,
+)
+from scalemyprints.infrastructure.viral_sources.tiktok_trending import (
+    TikTokTrendingAdapter,
+)
+from scalemyprints.infrastructure.viral_sources.twitter_trending import (
+    TwitterTrendingAdapter,
 )
 from scalemyprints.infrastructure.spy_apis.etsy_spy import EtsySpyAdapter
 from scalemyprints.infrastructure.spy_apis.merch_spy import MerchSpyAdapter
@@ -552,6 +569,49 @@ class ServiceContainer:
     def spy_fb_ad_library(self) -> FacebookAdLibraryAdapter:
         return FacebookAdLibraryAdapter(
             proxy_url=self._settings.spy_proxy_url or None,
+        )
+
+    # ----- Phase 3 services -----
+
+    def _build_pod_readiness_classifier(self) -> PODReadinessClassifier:
+        key = self._settings.openai_api_key.get_secret_value()
+        if not key:
+            return HeuristicPODReadinessClassifier()
+        return OpenAIPODReadinessClassifier(
+            api_key=key,
+            model=self._settings.openai_model_cheap,
+        )
+
+    def _build_viral_sources(self) -> list:
+        sources = []
+        if self._settings.spy_viral_reddit_enabled:
+            sources.append(RedditTrendingAdapter())
+        if self._settings.spy_viral_tiktok_enabled:
+            sources.append(
+                TikTokTrendingAdapter(
+                    proxy_url=self._settings.spy_proxy_url or None,
+                )
+            )
+        if self._settings.spy_viral_twitter_enabled:
+            sources.append(TwitterTrendingAdapter())
+        return sources
+
+    @property
+    def spy_viral_mining_service(self) -> ViralMiningService:
+        return ViralMiningService(
+            sources=self._build_viral_sources(),
+            classifier=self._build_pod_readiness_classifier(),
+        )
+
+    @property
+    def spy_tag_mining_service(self) -> TagMiningService:
+        return TagMiningService(search_service=self.spy_search_service)
+
+    @property
+    def spy_tm_overlay_service(self) -> TMOverlayService:
+        return TMOverlayService(
+            spy_search=self.spy_search_service,
+            trademark_search=self.build_trademark_search_service(),
         )
 
     # ------------------------------------------------------------------
