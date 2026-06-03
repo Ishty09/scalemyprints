@@ -209,3 +209,160 @@ class ShopProfileItem(BaseModel):
     avg_review_rating: float | None
     reviews_count: int | None
     last_seen_at: datetime
+
+
+# ---------------------------------------------------------------------------
+# POST /api/v1/spy/shop-audit
+# ---------------------------------------------------------------------------
+
+
+class ShopAuditBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    marketplace: Marketplace
+    handle: str = Field(min_length=1, max_length=120)
+    depth: str = Field(default="standard", pattern="^(shallow|standard|deep)$")
+
+
+class TagFrequencyItem(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    tag: str
+    count: int = Field(ge=0)
+
+
+class ShopAuditResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    shop: ShopProfileItem
+    depth: str
+    listings_sampled: int = Field(ge=0)
+    est_monthly_revenue_usd: float | None
+    avg_price_usd: float | None
+    new_listings_last_30d: int | None
+    restock_cadence_days: float | None
+    top_listings: list[SpyListingItem]
+    most_used_tags: list[TagFrequencyItem]
+    captured_at: datetime
+    error: str | None = None
+
+
+# ---------------------------------------------------------------------------
+# POST /api/v1/spy/saturation
+# ---------------------------------------------------------------------------
+
+
+class SaturationBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    phrase: str | None = Field(default=None, max_length=200)
+    listing_ids: list[str] = Field(default_factory=list)
+    marketplaces: list[Marketplace] = Field(default_factory=list)
+    use_live_search: bool = True
+
+
+class SaturationResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    score: int = Field(ge=0, le=100)
+    saturation_class: str
+    listings_count: int
+    unique_shops: int
+    hhi: float
+    gmv_pool_usd: float
+    density_component: int
+    concentration_component: int
+    velocity_component: int
+    recency_component: int
+    explanation: str
+
+
+# ---------------------------------------------------------------------------
+# POST /api/v1/spy/profit
+# ---------------------------------------------------------------------------
+
+
+class ProfitBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    marketplace: Marketplace
+    product_type: str = Field(min_length=1, max_length=40)
+    sale_price_usd: float = Field(gt=0)
+    printer: str = Field(default="printify", min_length=1)
+    shipping_usd: float = Field(default=0.0, ge=0.0)
+    ad_cpc_usd: float = Field(default=0.0, ge=0.0)
+    ad_conversion_rate: float = Field(default=0.0, ge=0.0, le=1.0)
+
+
+class ProfitResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    sale_price_usd: float
+    base_cost_usd: float
+    marketplace_fee_usd: float
+    shipping_usd: float
+    ad_cost_usd: float
+    profit_usd: float
+    margin_pct: float
+    printer: str
+    note: str | None = None
+
+
+# ---------------------------------------------------------------------------
+# GET /api/v1/spy/ads
+# ---------------------------------------------------------------------------
+
+
+class AdSpyHitItem(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    platform: str
+    ad_id: str
+    page_or_handle: str
+    page_id: str | None
+    primary_text: str | None
+    cta: str | None
+    landing_url: HttpUrl | None
+    started_at: datetime | None
+    last_seen_at: datetime | None
+    impressions_lower: int | None
+    impressions_upper: int | None
+    countries: list[str]
+
+
+class AdLibraryResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    platform: str
+    hits: list[AdSpyHitItem]
+    total: int
+    duration_ms: int
+    error: str | None = None
+
+
+# ---------------------------------------------------------------------------
+# POST /api/v1/spy/_internal/refresh-velocity  (cron-only)
+# ---------------------------------------------------------------------------
+
+
+class VelocityRefreshBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    limit: int = Field(default=50, ge=1, le=500)
+    max_age_hours: int = Field(default=6, ge=1, le=168)
+
+
+class VelocityRefreshResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    started_at: datetime
+    completed_at: datetime
+    duration_ms: int
+    candidates: int
+    refreshed: int
+    failed: int
+    spikes_detected: int
+    by_marketplace: dict[str, int]
+    errors: list[str]
+    reviews_count: int | None
+    last_seen_at: datetime

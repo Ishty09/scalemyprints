@@ -34,6 +34,9 @@ from scalemyprints.domain.spy.ports import (
 )
 from scalemyprints.domain.spy.reverse_image_service import ReverseImageSearchService
 from scalemyprints.domain.spy.search_service import SpySearchService
+from scalemyprints.domain.spy.shop_audit_service import ShopAuditService
+from scalemyprints.domain.spy.velocity_refresh_service import VelocityRefreshService
+from scalemyprints.domain.spy.velocity_service import VelocityAnalyzer as VelocityAnalyzerImpl
 from scalemyprints.domain.trademark.enums import JurisdictionCode
 from scalemyprints.domain.trademark.ports import (
     CacheStore,
@@ -51,6 +54,9 @@ from scalemyprints.infrastructure.image_search.clip_embedder import (
 from scalemyprints.infrastructure.image_search.memory_store import MemoryEmbeddingStore
 from scalemyprints.infrastructure.image_search.pgvector_store import (
     SupabasePgvectorStore,
+)
+from scalemyprints.infrastructure.ad_libraries.fb_ad_library import (
+    FacebookAdLibraryAdapter,
 )
 from scalemyprints.infrastructure.spy_apis.etsy_spy import EtsySpyAdapter
 from scalemyprints.infrastructure.spy_apis.merch_spy import MerchSpyAdapter
@@ -527,6 +533,26 @@ class ServiceContainer:
     @property
     def spy_hot_movers_provider(self) -> HotMoversProvider:
         return self._spy_hot_movers
+
+    # ----- Phase 2 services -----
+
+    @property
+    def spy_shop_audit_service(self) -> ShopAuditService:
+        return ShopAuditService(adapters=self._spy_adapters)
+
+    @property
+    def spy_velocity_refresh_service(self) -> VelocityRefreshService:
+        return VelocityRefreshService(
+            adapters=self._spy_adapters,
+            listing_store=self._spy_listing_store,
+            analyzer=VelocityAnalyzerImpl(),
+        )
+
+    @property
+    def spy_fb_ad_library(self) -> FacebookAdLibraryAdapter:
+        return FacebookAdLibraryAdapter(
+            proxy_url=self._settings.spy_proxy_url or None,
+        )
 
     # ------------------------------------------------------------------
     # Lifecycle
