@@ -29,12 +29,11 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from scalemyprints.core.logging import get_logger
 from scalemyprints.domain.spy import saturation_service
-from scalemyprints.domain.spy.enums import Marketplace
 
 if TYPE_CHECKING:
+    from scalemyprints.domain.spy.enums import Marketplace
     from scalemyprints.domain.spy.search_service import SpySearchService
     from scalemyprints.domain.trademark.models import (
-        TrademarkSearchRequest,
         TrademarkSearchResponse,
     )
     from scalemyprints.domain.trademark.search_service import TrademarkSearchService

@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 from pydantic import BaseModel, ConfigDict, Field
 
 from scalemyprints.core.logging import get_logger
-from scalemyprints.domain.spy.models import ViralSignal
+from scalemyprints.domain.spy.models import ViralSignal  # noqa: TC001 — needed at runtime for pydantic field
 
 if TYPE_CHECKING:
     from scalemyprints.domain.spy.ports import ViralSourceAdapter
