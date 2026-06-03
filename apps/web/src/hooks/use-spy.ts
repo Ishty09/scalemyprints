@@ -3,8 +3,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import type {
+  AdLibraryResponse,
   HotMoversResponse,
+  ProfitBody,
+  ProfitResponse,
   ReverseImageResponse,
+  SaturationBody,
+  SaturationResponse,
+  ShopAuditBody,
+  ShopAuditResponse,
   SpyListingItem,
   SpySearchBody,
   SpySearchResponse,
@@ -80,5 +87,64 @@ export function useSpyListing(listingId: string | null | undefined) {
     queryKey: [...SPY_KEY, 'listing', listingId],
     enabled: Boolean(listingId),
     queryFn: () => apiClient.get<SpyListingItem>(`/api/v1/spy/listing/${listingId}`),
+  })
+}
+
+/**
+ * Phase 2: shop teardown.
+ */
+export function useShopAudit() {
+  return useMutation<ShopAuditResponse, ApiClientError, ShopAuditBody>({
+    mutationKey: [...SPY_KEY, 'shop-audit'],
+    mutationFn: (body) =>
+      apiClient.post<ShopAuditResponse, ShopAuditBody>('/api/v1/spy/shop-audit', body),
+  })
+}
+
+/**
+ * Phase 2: saturation/difficulty score.
+ */
+export function useSaturation() {
+  return useMutation<SaturationResponse, ApiClientError, SaturationBody>({
+    mutationKey: [...SPY_KEY, 'saturation'],
+    mutationFn: (body) =>
+      apiClient.post<SaturationResponse, SaturationBody>('/api/v1/spy/saturation', body),
+  })
+}
+
+/**
+ * Phase 2: profit calculator (server-side single-source-of-truth math).
+ */
+export function useProfit() {
+  return useMutation<ProfitResponse, ApiClientError, ProfitBody>({
+    mutationKey: [...SPY_KEY, 'profit'],
+    mutationFn: (body) =>
+      apiClient.post<ProfitResponse, ProfitBody>('/api/v1/spy/profit', body),
+  })
+}
+
+/**
+ * Phase 2: Facebook Ad Library search.
+ */
+export function useFbAds(params: {
+  keyword?: string | null
+  pageHandle?: string | null
+  country?: string
+  limit?: number
+  enabled?: boolean
+}) {
+  const { keyword, pageHandle, country = 'ALL', limit = 25, enabled = true } = params
+  return useQuery<AdLibraryResponse, ApiClientError>({
+    queryKey: [...SPY_KEY, 'fb-ads', { keyword, pageHandle, country, limit }],
+    enabled: enabled && Boolean(keyword || pageHandle),
+    queryFn: () => {
+      const search = new URLSearchParams()
+      if (keyword) search.set('keyword', keyword)
+      if (pageHandle) search.set('page_handle', pageHandle)
+      search.set('country', country)
+      search.set('limit', String(limit))
+      return apiClient.get<AdLibraryResponse>(`/api/v1/spy/ads?${search.toString()}`)
+    },
+    staleTime: 5 * 60 * 1000,
   })
 }

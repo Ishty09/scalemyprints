@@ -174,6 +174,28 @@ class SupabaseListingStore(ListingStore):
         rows = resp.json()
         return [_row_to_snapshot(r) for r in rows]
 
+    async def candidates_for_refresh(
+        self,
+        *,
+        limit: int = 100,
+        max_age_hours: int = 6,
+    ) -> list[tuple[str, Listing]]:
+        from datetime import UTC, datetime, timedelta  # noqa: PLC0415
+
+        cutoff = (datetime.now(UTC) - timedelta(hours=max_age_hours)).isoformat()
+        client = await self._http()
+        url = f"{self._url}/rest/v1/spy_listings"
+        params = {
+            "select": "*",
+            "last_seen_at": f"lte.{cutoff}",
+            "order": "last_seen_at.asc",
+            "limit": str(limit),
+        }
+        resp = await client.get(url, params=params, headers=self._headers)
+        resp.raise_for_status()
+        rows = resp.json()
+        return [(str(r["id"]), _row_to_listing(r)) for r in rows]
+
 
 # -----------------------------------------------------------------------------
 # (De)serialization
