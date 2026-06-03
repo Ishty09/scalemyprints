@@ -25,6 +25,7 @@ from scalemyprints.api.middleware.request_context import RequestContextMiddlewar
 from scalemyprints.api.routes import (
     health_router,
     niche_router,
+    spy_public_router,
     spy_router,
     trademark_router,
 )
@@ -115,6 +116,7 @@ def create_app() -> FastAPI:
     app.include_router(trademark_router)
     app.include_router(niche_router)
     app.include_router(spy_router)
+    app.include_router(spy_public_router)
 
     @app.get("/", include_in_schema=False)
     async def root() -> dict[str, str]:

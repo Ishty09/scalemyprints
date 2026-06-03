@@ -26,7 +26,11 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from scalemyprints.core.logging import get_logger
 from scalemyprints.domain.spy.enums import Marketplace, VelocityClass
-from scalemyprints.domain.spy.models import Listing, ListingSnapshot
+from scalemyprints.domain.spy.models import (  # noqa: TC001 — runtime use for pydantic fields
+    Listing,
+    ListingSnapshot,
+    VelocitySignal,
+)
 
 if TYPE_CHECKING:
     from scalemyprints.domain.spy.ports import (
@@ -52,6 +56,8 @@ class VelocityRefreshSummary(BaseModel):
     spikes_detected: int = Field(ge=0)
     by_marketplace: dict[str, int] = Field(default_factory=dict)
     errors: list[str] = Field(default_factory=list)
+    # Phase 4.5 — surfaced for WatchlistService.evaluate()
+    velocity_signals: list[VelocitySignal] = Field(default_factory=list)
 
 
 class VelocityRefreshService:
@@ -107,6 +113,7 @@ class VelocityRefreshService:
                 by_mkt[r.marketplace.value] = by_mkt.get(r.marketplace.value, 0) + 1
 
         errors = [r.error for r in results if r.error][:20]
+        velocity_signals = [r.signal for r in results if r.signal is not None]
 
         summary = VelocityRefreshSummary(
             started_at=started,
@@ -118,6 +125,7 @@ class VelocityRefreshService:
             spikes_detected=spikes,
             by_marketplace=by_mkt,
             errors=errors,
+            velocity_signals=velocity_signals,
         )
         logger.info(
             "velocity_refresh_completed",
@@ -190,6 +198,7 @@ class VelocityRefreshService:
             marketplace=listing.marketplace,
             refreshed=True,
             spike_detected=spike,
+            signal=signal if spike else None,
         )
 
 
@@ -197,6 +206,7 @@ class _RefreshOutcome(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     marketplace: Marketplace
+    signal: VelocitySignal | None = None
     refreshed: bool
     spike_detected: bool = False
     error: str | None = None

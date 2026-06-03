@@ -95,6 +95,11 @@ from scalemyprints.infrastructure.spy_storage.memory_watchlist_store import (
     MemoryApiKeyStore,
     MemoryWatchlistStore,
 )
+from scalemyprints.infrastructure.spy_storage.supabase_watchlist_store import (
+    SupabaseAlertStore,
+    SupabaseApiKeyStore,
+    SupabaseWatchlistStore,
+)
 from scalemyprints.infrastructure.spy_apis.etsy_spy import EtsySpyAdapter
 from scalemyprints.infrastructure.spy_apis.merch_spy import MerchSpyAdapter
 from scalemyprints.infrastructure.spy_apis.redbubble_spy import RedbubbleSpyAdapter
@@ -178,10 +183,10 @@ class ServiceContainer:
         self._spy_embedding_store: EmbeddingStore = self._build_spy_embedding_store()
         self._spy_image_embedder: ImageEmbedder = self._build_spy_image_embedder()
         self._spy_hot_movers: HotMoversProvider = self._build_spy_hot_movers()
-        # Phase 4 — singletons (process-local memory stores in dev)
-        self._spy_watchlist_store: WatchlistStore = MemoryWatchlistStore()
-        self._spy_alert_store: AlertStore = MemoryAlertStore()
-        self._spy_api_key_store: MemoryApiKeyStore = MemoryApiKeyStore()
+        # Phase 4 — singletons. Picks Supabase when storage is configured.
+        self._spy_watchlist_store: WatchlistStore = self._build_spy_watchlist_store()
+        self._spy_alert_store: AlertStore = self._build_spy_alert_store()
+        self._spy_api_key_store = self._build_spy_api_key_store()
 
         logger.info(
             "service_container_initialized",
@@ -678,6 +683,36 @@ class ServiceContainer:
     @property
     def spy_seasonality_service(self) -> SeasonalityService:
         return SeasonalityService(events_provider=self._niche_events)
+
+    # ----- Phase 4.5 store builders -----
+
+    def _build_spy_watchlist_store(self) -> WatchlistStore:
+        if self._settings.spy_storage_provider == "memory":
+            return MemoryWatchlistStore()
+        url = self._settings.supabase_url
+        key = self._settings.supabase_service_role_key.get_secret_value()
+        if not url or not key:
+            logger.warning("spy_watchlist_store_creds_missing_falling_back_memory")
+            return MemoryWatchlistStore()
+        return SupabaseWatchlistStore(supabase_url=url, service_role_key=key)
+
+    def _build_spy_alert_store(self) -> AlertStore:
+        if self._settings.spy_storage_provider == "memory":
+            return MemoryAlertStore()
+        url = self._settings.supabase_url
+        key = self._settings.supabase_service_role_key.get_secret_value()
+        if not url or not key:
+            return MemoryAlertStore()
+        return SupabaseAlertStore(supabase_url=url, service_role_key=key)
+
+    def _build_spy_api_key_store(self):  # returns Memory or Supabase api key store
+        if self._settings.spy_storage_provider == "memory":
+            return MemoryApiKeyStore()
+        url = self._settings.supabase_url
+        key = self._settings.supabase_service_role_key.get_secret_value()
+        if not url or not key:
+            return MemoryApiKeyStore()
+        return SupabaseApiKeyStore(supabase_url=url, service_role_key=key)
 
     # ------------------------------------------------------------------
     # Lifecycle
