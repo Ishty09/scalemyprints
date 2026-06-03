@@ -473,3 +473,133 @@ export interface TMOverlayResponse {
   }
   duration_ms: number
 }
+
+// ---------------------------------------------------------------------------
+// Phase 4 — watchlists, alerts, niche suggester, competitor diff, seasonality, API keys
+// ---------------------------------------------------------------------------
+
+export type WatchType = 'phrase' | 'shop' | 'listing' | 'viral_category'
+
+export type AlertTrigger =
+  | 'velocity_spike'
+  | 'new_listing'
+  | 'price_drop'
+  | 'price_increase'
+  | 'viral_hit'
+  | 'saturation_drop'
+
+export type AlertChannel = 'in_app' | 'email' | 'slack' | 'webhook'
+
+export interface AlertChannelConfigItem {
+  channel: AlertChannel
+  target?: string | null
+  enabled?: boolean
+}
+
+export interface WatchlistCreateBody {
+  watch_type: WatchType
+  target: string
+  label?: string | null
+  triggers?: AlertTrigger[]
+  channels?: AlertChannelConfigItem[]
+}
+
+export interface WatchlistItem {
+  id: string
+  user_id: string
+  watch_type: WatchType
+  target: string
+  label: string | null
+  triggers: AlertTrigger[]
+  channels: AlertChannelConfigItem[]
+  enabled: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface AlertItem {
+  id: string
+  watchlist_id: string | null
+  trigger: AlertTrigger
+  status: 'pending' | 'delivered' | 'read' | 'dismissed' | 'failed'
+  headline: string
+  detail: string | null
+  severity: number
+  channels_delivered: AlertChannel[]
+  created_at: string
+  delivered_at: string | null
+  read_at: string | null
+}
+
+export interface AlertListResponse {
+  items: AlertItem[]
+  unread_count: number
+}
+
+export interface NicheSuggesterBody {
+  preferred_styles?: string[]
+  excluded_phrases?: string[]
+  marketplaces?: Marketplace[]
+  limit?: number
+  min_pod_readiness?: number
+  max_risk?: number
+}
+
+export interface NicheSuggestionItem {
+  phrase: string
+  opportunity_score: number
+  risk_score: number
+  saturation_score: number
+  pod_readiness_score: number
+  est_monthly_gmv_usd: number
+  suggested_styles: string[]
+  rationale: string
+  source: 'viral' | 'hot_movers' | 'tag_mining'
+  sample_urls: string[]
+}
+
+export interface NicheSuggesterResponse {
+  suggestions: NicheSuggestionItem[]
+  candidates_considered: number
+  duration_ms: number
+}
+
+export interface SeasonalityBody {
+  seed: string
+  horizon_days?: number
+  country?: string
+  lag_days?: number
+}
+
+export interface SeasonalityWindowItem {
+  name: string
+  starts_at: string
+  peaks_at: string
+  ends_at: string
+  confidence: number
+  suggested_drop_by: string
+  rationale: string
+  related_event: string | null
+}
+
+export interface SeasonalityResponse {
+  seed: string
+  windows: SeasonalityWindowItem[]
+  horizon_days: number
+  computed_at: string
+}
+
+export interface ApiKeyItem {
+  id: string
+  label: string
+  prefix: string
+  scopes: string[]
+  revoked: boolean
+  last_used_at: string | null
+  created_at: string
+}
+
+export interface ApiKeyCreatedResponse {
+  key: ApiKeyItem
+  clear_text: string
+}

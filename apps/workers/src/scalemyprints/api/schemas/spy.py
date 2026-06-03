@@ -454,5 +454,166 @@ class TMOverlayResponse(BaseModel):
     est_monthly_gmv_usd: float
     trademark: dict[str, object]
     duration_ms: int
+
+
+# ---------------------------------------------------------------------------
+# Phase 4 — watchlists, alerts, niche suggester, competitor diff, seasonality, api keys
+# ---------------------------------------------------------------------------
+
+
+class AlertChannelConfigItem(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    channel: str
+    target: str | None = None
+    enabled: bool = True
+
+
+class WatchlistCreateBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    watch_type: str = Field(pattern="^(phrase|shop|listing|viral_category)$")
+    target: str = Field(min_length=1, max_length=400)
+    label: str | None = Field(default=None, max_length=120)
+    triggers: list[str] = Field(default_factory=list)
+    channels: list[AlertChannelConfigItem] = Field(default_factory=list)
+
+
+class WatchlistItem(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    id: str
+    user_id: str
+    watch_type: str
+    target: str
+    label: str | None
+    triggers: list[str]
+    channels: list[AlertChannelConfigItem]
+    enabled: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class AlertItem(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    id: str
+    watchlist_id: str | None
+    trigger: str
+    status: str
+    headline: str
+    detail: str | None
+    severity: int
+    channels_delivered: list[str]
+    created_at: datetime
+    delivered_at: datetime | None
+    read_at: datetime | None
+
+
+class AlertListResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    items: list[AlertItem]
+    unread_count: int
+
+
+class NicheSuggesterBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    preferred_styles: list[str] = Field(default_factory=list)
+    excluded_phrases: list[str] = Field(default_factory=list)
+    marketplaces: list[Marketplace] = Field(default_factory=list)
+    limit: int = Field(default=10, ge=1, le=50)
+    min_pod_readiness: int = Field(default=55, ge=0, le=100)
+    max_risk: int = Field(default=60, ge=0, le=100)
+
+
+class NicheSuggestionItem(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    phrase: str
+    opportunity_score: int
+    risk_score: int
+    saturation_score: int
+    pod_readiness_score: int
+    est_monthly_gmv_usd: float
+    suggested_styles: list[str]
+    rationale: str
+    source: str
+    sample_urls: list[HttpUrl]
+
+
+class NicheSuggesterResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    suggestions: list[NicheSuggestionItem]
+    candidates_considered: int
+    duration_ms: int
+
+
+class CompetitorDiffBody(BaseModel):
+    """Compute diff between two cached ShopAuditReport payloads."""
+
+    model_config = ConfigDict(extra="forbid")
+    previous: dict[str, object]
+    current: dict[str, object]
+
+
+class CompetitorDiffResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    marketplace: str
+    handle: str
+    previous_at: datetime
+    current_at: datetime
+    new_listings: list[str]
+    removed_listings: list[str]
+    price_changes: list[dict[str, object]]
+    restock_signals: list[str]
+    velocity_movers: list[str]
+    note: str | None
+
+
+class SeasonalityBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    seed: str = Field(min_length=2, max_length=200)
+    horizon_days: int = Field(default=180, ge=1, le=730)
+    country: str = Field(default="US", min_length=2, max_length=4)
+    lag_days: int = Field(default=30, ge=0, le=180)
+
+
+class SeasonalityWindowItem(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    name: str
+    starts_at: datetime
+    peaks_at: datetime
+    ends_at: datetime
+    confidence: float
+    suggested_drop_by: datetime
+    rationale: str
+    related_event: str | None
+
+
+class SeasonalityResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    seed: str
+    windows: list[SeasonalityWindowItem]
+    horizon_days: int
+    computed_at: datetime
+
+
+class ApiKeyCreateBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    label: str = Field(min_length=1, max_length=80)
+
+
+class ApiKeyItem(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    id: str
+    label: str
+    prefix: str
+    scopes: list[str]
+    revoked: bool
+    last_used_at: datetime | None
+    created_at: datetime
+
+
+class ApiKeyCreatedResponse(BaseModel):
+    """Returned exactly once on creation — `clear_text` is never persisted."""
+
+    model_config = ConfigDict(extra="forbid")
+    key: ApiKeyItem
+    clear_text: str
     reviews_count: int | None
     last_seen_at: datetime
