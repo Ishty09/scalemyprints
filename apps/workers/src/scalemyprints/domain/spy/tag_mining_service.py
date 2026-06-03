@@ -23,7 +23,6 @@ from scalemyprints.core.logging import get_logger
 
 if TYPE_CHECKING:
     from scalemyprints.domain.spy.enums import Marketplace
-    from scalemyprints.domain.spy.models import SpyQuery
     from scalemyprints.domain.spy.search_service import SpySearchService
 
 logger = get_logger(__name__)

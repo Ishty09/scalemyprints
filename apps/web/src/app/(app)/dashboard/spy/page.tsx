@@ -1,6 +1,8 @@
 'use client'
 
 import {
+  Bell,
+  Brain,
   Building2,
   Calculator,
   Flame,
@@ -21,18 +23,28 @@ import type {
 import { MARKETPLACE_LABELS } from '@scalemyprints/contracts'
 
 import { SpyListingCard } from '@/components/app/spy-listing-card'
+import { SpyNicheSuggesterPanel } from '@/components/app/spy-niche-suggester-panel'
 import { SpyProfitCalc } from '@/components/app/spy-profit-calc'
 import { SpyReverseImageUploader } from '@/components/app/spy-reverse-image-uploader'
 import { SpySearchForm } from '@/components/app/spy-search-form'
 import { SpyShopAuditPanel } from '@/components/app/spy-shop-audit-panel'
 import { SpyViralFeed } from '@/components/app/spy-viral-feed'
+import { SpyWatchlistsPanel } from '@/components/app/spy-watchlists-panel'
 import {
   useSpyHotMovers,
   useSpyReverseImage,
   useSpySearch,
 } from '@/hooks/use-spy'
 
-type Tab = 'search' | 'reverse' | 'feed' | 'shop' | 'profit' | 'viral'
+type Tab =
+  | 'search'
+  | 'reverse'
+  | 'feed'
+  | 'shop'
+  | 'profit'
+  | 'viral'
+  | 'watchlists'
+  | 'suggester'
 
 export default function SpyPage() {
   const [tab, setTab] = useState<Tab>('search')
@@ -65,6 +77,8 @@ export default function SpyPage() {
             { id: 'shop', label: 'Shop Teardown', icon: Building2 },
             { id: 'profit', label: 'Profit Calc', icon: Calculator },
             { id: 'viral', label: 'Viral Feed', icon: Sparkles },
+            { id: 'suggester', label: 'Niche Suggester', icon: Brain },
+            { id: 'watchlists', label: 'Watchlists', icon: Bell },
           ] as { id: Tab; label: string; icon: typeof Search }[]
         ).map((t) => {
           const active = tab === t.id
@@ -161,6 +175,10 @@ export default function SpyPage() {
       {tab === 'profit' && <SpyProfitCalc />}
 
       {tab === 'viral' && <SpyViralFeed />}
+
+      {tab === 'suggester' && <SpyNicheSuggesterPanel />}
+
+      {tab === 'watchlists' && <SpyWatchlistsPanel />}
     </div>
   )
 }

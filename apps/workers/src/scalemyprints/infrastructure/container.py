@@ -34,12 +34,19 @@ from scalemyprints.domain.spy.ports import (
 )
 from scalemyprints.domain.spy.reverse_image_service import ReverseImageSearchService
 from scalemyprints.domain.spy.search_service import SpySearchService
+from scalemyprints.domain.spy.niche_suggester_service import NicheSuggesterService
+from scalemyprints.domain.spy.seasonality_service import SeasonalityService
 from scalemyprints.domain.spy.shop_audit_service import ShopAuditService
 from scalemyprints.domain.spy.tag_mining_service import TagMiningService
 from scalemyprints.domain.spy.tm_overlay_service import TMOverlayService
 from scalemyprints.domain.spy.velocity_refresh_service import VelocityRefreshService
 from scalemyprints.domain.spy.velocity_service import VelocityAnalyzer as VelocityAnalyzerImpl
 from scalemyprints.domain.spy.viral_mining_service import ViralMiningService
+from scalemyprints.domain.spy.watchlist_service import (
+    AlertStore,
+    WatchlistService,
+    WatchlistStore,
+)
 from scalemyprints.domain.trademark.enums import JurisdictionCode
 from scalemyprints.domain.trademark.ports import (
     CacheStore,
@@ -74,6 +81,19 @@ from scalemyprints.infrastructure.viral_sources.tiktok_trending import (
 )
 from scalemyprints.infrastructure.viral_sources.twitter_trending import (
     TwitterTrendingAdapter,
+)
+from scalemyprints.infrastructure.alert_dispatchers.email_resend import (
+    ResendEmailAlertDispatcher,
+)
+from scalemyprints.infrastructure.alert_dispatchers.in_app import InAppAlertDispatcher
+from scalemyprints.infrastructure.alert_dispatchers.slack import SlackAlertDispatcher
+from scalemyprints.infrastructure.alert_dispatchers.webhook import (
+    WebhookAlertDispatcher,
+)
+from scalemyprints.infrastructure.spy_storage.memory_watchlist_store import (
+    MemoryAlertStore,
+    MemoryApiKeyStore,
+    MemoryWatchlistStore,
 )
 from scalemyprints.infrastructure.spy_apis.etsy_spy import EtsySpyAdapter
 from scalemyprints.infrastructure.spy_apis.merch_spy import MerchSpyAdapter
@@ -158,6 +178,10 @@ class ServiceContainer:
         self._spy_embedding_store: EmbeddingStore = self._build_spy_embedding_store()
         self._spy_image_embedder: ImageEmbedder = self._build_spy_image_embedder()
         self._spy_hot_movers: HotMoversProvider = self._build_spy_hot_movers()
+        # Phase 4 — singletons (process-local memory stores in dev)
+        self._spy_watchlist_store: WatchlistStore = MemoryWatchlistStore()
+        self._spy_alert_store: AlertStore = MemoryAlertStore()
+        self._spy_api_key_store: MemoryApiKeyStore = MemoryApiKeyStore()
 
         logger.info(
             "service_container_initialized",
@@ -613,6 +637,47 @@ class ServiceContainer:
             spy_search=self.spy_search_service,
             trademark_search=self.build_trademark_search_service(),
         )
+
+    # ----- Phase 4 stores + services -----
+
+    @property
+    def spy_watchlist_store(self) -> WatchlistStore:
+        return self._spy_watchlist_store
+
+    @property
+    def spy_alert_store(self) -> AlertStore:
+        return self._spy_alert_store
+
+    @property
+    def spy_api_key_store(self) -> MemoryApiKeyStore:
+        return self._spy_api_key_store
+
+    @property
+    def spy_watchlist_service(self) -> WatchlistService:
+        signing = self._settings.internal_api_secret.get_secret_value()
+        dispatchers = [
+            InAppAlertDispatcher(),
+            WebhookAlertDispatcher(signing_secret=signing),
+            SlackAlertDispatcher(),
+            ResendEmailAlertDispatcher(),
+        ]
+        return WatchlistService(
+            watchlist_store=self._spy_watchlist_store,
+            alert_store=self._spy_alert_store,
+            dispatchers=dispatchers,
+        )
+
+    @property
+    def spy_niche_suggester_service(self) -> NicheSuggesterService:
+        return NicheSuggesterService(
+            viral_mining=self.spy_viral_mining_service,
+            hot_movers=self.spy_hot_movers_provider,
+            tm_overlay=self.spy_tm_overlay_service,
+        )
+
+    @property
+    def spy_seasonality_service(self) -> SeasonalityService:
+        return SeasonalityService(events_provider=self._niche_events)
 
     # ------------------------------------------------------------------
     # Lifecycle

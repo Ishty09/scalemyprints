@@ -32,14 +32,28 @@ from scalemyprints.api.schemas.envelope import ApiSuccess, success
 from scalemyprints.api.schemas.spy import (
     AdLibraryResponse,
     AdSpyHitItem,
+    AlertChannelConfigItem,
+    AlertItem,
+    AlertListResponse,
+    ApiKeyCreateBody,
+    ApiKeyCreatedResponse,
+    ApiKeyItem,
+    CompetitorDiffBody,
+    CompetitorDiffResponse,
     HotMoversResponse,
     MinedTagItem,
+    NicheSuggesterBody,
+    NicheSuggesterResponse,
+    NicheSuggestionItem,
     ProfitBody,
     ProfitResponse,
     ReverseImageMatchItem,
     ReverseImageResponse,
     SaturationBody,
     SaturationResponse,
+    SeasonalityBody,
+    SeasonalityResponse,
+    SeasonalityWindowItem,
     ShopAuditBody,
     ShopAuditResponse,
     ShopProfileItem,
@@ -55,6 +69,8 @@ from scalemyprints.api.schemas.spy import (
     VelocityRefreshResponse,
     ViralFeedResponse,
     ViralSignalItem,
+    WatchlistCreateBody,
+    WatchlistItem,
 )
 from scalemyprints.core.config import get_settings
 from scalemyprints.core.logging import bind_request_context, get_logger
@@ -647,3 +663,332 @@ async def spy_tm_overlay(
             duration_ms=overlay.duration_ms,
         )
     )
+
+
+# ===========================================================================
+# Phase 4 endpoints
+# ===========================================================================
+
+
+def _serialize_watchlist(w: object) -> WatchlistItem:
+    from scalemyprints.domain.spy.watchlist_models import Watchlist  # noqa: PLC0415
+
+    assert isinstance(w, Watchlist)
+    return WatchlistItem(
+        id=w.id,
+        user_id=w.user_id,
+        watch_type=w.watch_type.value,
+        target=w.target,
+        label=w.label,
+        triggers=[t.value for t in w.triggers],
+        channels=[
+            AlertChannelConfigItem(
+                channel=c.channel.value,
+                target=c.target,
+                enabled=c.enabled,
+            )
+            for c in w.channels
+        ],
+        enabled=w.enabled,
+        created_at=w.created_at,
+        updated_at=w.updated_at,
+    )
+
+
+@router.post("/watchlists", response_model=ApiSuccess[WatchlistItem])
+async def spy_create_watchlist(
+    payload: WatchlistCreateBody,
+    user: Annotated[CurrentUser, Depends(get_current_user)],
+    container: Annotated[ServiceContainer, Depends(get_service_container)],
+) -> ApiSuccess[WatchlistItem]:
+    bind_request_context(user_id=user.id)
+    from scalemyprints.domain.spy.watchlist_models import (  # noqa: PLC0415
+        AlertChannel,
+        AlertChannelConfig,
+        AlertTrigger,
+        WatchType,
+    )
+
+    try:
+        triggers = [AlertTrigger(t) for t in payload.triggers]
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"code": "invalid_trigger", "message": str(e)},
+        ) from e
+
+    channels = [
+        AlertChannelConfig(
+            channel=AlertChannel(c.channel),
+            target=c.target,
+            enabled=c.enabled,
+        )
+        for c in payload.channels
+    ]
+    if not channels:
+        channels = [AlertChannelConfig(channel=AlertChannel.IN_APP)]
+
+    service = container.spy_watchlist_service
+    w = await service.create(
+        user_id=user.id,
+        watch_type=WatchType(payload.watch_type),
+        target=payload.target,
+        label=payload.label,
+        triggers=triggers,
+        channels=channels,
+    )
+    return success(_serialize_watchlist(w))
+
+
+@router.get("/watchlists", response_model=ApiSuccess[list[WatchlistItem]])
+async def spy_list_watchlists(
+    user: Annotated[CurrentUser, Depends(get_current_user)],
+    container: Annotated[ServiceContainer, Depends(get_service_container)],
+) -> ApiSuccess[list[WatchlistItem]]:
+    bind_request_context(user_id=user.id)
+    rows = await container.spy_watchlist_service.list_for_user(user.id)
+    return success([_serialize_watchlist(r) for r in rows])
+
+
+@router.delete("/watchlists/{watchlist_id}", response_model=ApiSuccess[dict[str, object]])
+async def spy_delete_watchlist(
+    watchlist_id: str,
+    user: Annotated[CurrentUser, Depends(get_current_user)],
+    container: Annotated[ServiceContainer, Depends(get_service_container)],
+) -> ApiSuccess[dict[str, object]]:
+    bind_request_context(user_id=user.id)
+    deleted = await container.spy_watchlist_service.delete(watchlist_id, user.id)
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "not_found", "message": "Watchlist not found"},
+        )
+    return success({"id": watchlist_id, "deleted": True})
+
+
+@router.get("/alerts", response_model=ApiSuccess[AlertListResponse])
+async def spy_list_alerts(
+    user: Annotated[CurrentUser, Depends(get_current_user)],
+    container: Annotated[ServiceContainer, Depends(get_service_container)],
+    limit: Annotated[int, Query(ge=1, le=200)] = 50,
+    only_unread: Annotated[bool, Query()] = False,
+) -> ApiSuccess[AlertListResponse]:
+    bind_request_context(user_id=user.id)
+    rows = await container.spy_alert_store.list_for_user(
+        user.id, limit=limit, only_unread=only_unread
+    )
+    unread = await container.spy_alert_store.list_for_user(
+        user.id, limit=500, only_unread=True
+    )
+    return success(
+        AlertListResponse(
+            items=[
+                AlertItem(
+                    id=r.id,
+                    watchlist_id=r.watchlist_id,
+                    trigger=r.trigger.value,
+                    status=r.status.value,
+                    headline=r.headline,
+                    detail=r.detail,
+                    severity=r.severity,
+                    channels_delivered=[c.value for c in r.channels_delivered],
+                    created_at=r.created_at,
+                    delivered_at=r.delivered_at,
+                    read_at=r.read_at,
+                )
+                for r in rows
+            ],
+            unread_count=len(unread),
+        )
+    )
+
+
+@router.post("/niche-suggester", response_model=ApiSuccess[NicheSuggesterResponse])
+async def spy_niche_suggester(
+    payload: NicheSuggesterBody,
+    user: Annotated[CurrentUser, Depends(get_current_user)],
+    container: Annotated[ServiceContainer, Depends(get_service_container)],
+    limiter: Annotated[RateLimiter, Depends(get_rate_limiter)],
+) -> ApiSuccess[NicheSuggesterResponse]:
+    settings = get_settings()
+    bind_request_context(user_id=user.id)
+    await limiter.check(
+        key=f"user:{user.id}:spy:niche_suggester",
+        limit=settings.rate_limit_per_minute,
+        window_seconds=60,
+    )
+
+    from scalemyprints.domain.spy.niche_suggester_service import (  # noqa: PLC0415
+        NicheSuggesterInput,
+    )
+
+    result = await container.spy_niche_suggester_service.suggest(
+        NicheSuggesterInput(
+            preferred_styles=payload.preferred_styles,
+            excluded_phrases=payload.excluded_phrases,
+            marketplaces=payload.marketplaces,
+            limit=payload.limit,
+            min_pod_readiness=payload.min_pod_readiness,
+            max_risk=payload.max_risk,
+        )
+    )
+    return success(
+        NicheSuggesterResponse(
+            suggestions=[
+                NicheSuggestionItem(
+                    phrase=s.phrase,
+                    opportunity_score=s.opportunity_score,
+                    risk_score=s.risk_score,
+                    saturation_score=s.saturation_score,
+                    pod_readiness_score=s.pod_readiness_score,
+                    est_monthly_gmv_usd=s.est_monthly_gmv_usd,
+                    suggested_styles=s.suggested_styles,
+                    rationale=s.rationale,
+                    source=s.source,
+                    sample_urls=s.sample_urls,
+                )
+                for s in result.suggestions
+            ],
+            candidates_considered=result.candidates_considered,
+            duration_ms=result.duration_ms,
+        )
+    )
+
+
+@router.post(
+    "/competitor-diff",
+    response_model=ApiSuccess[CompetitorDiffResponse],
+)
+async def spy_competitor_diff(
+    payload: CompetitorDiffBody,
+    user: Annotated[CurrentUser, Depends(get_current_user)],
+) -> ApiSuccess[CompetitorDiffResponse]:
+    bind_request_context(user_id=user.id)
+    from scalemyprints.domain.spy.competitor_diff_service import (  # noqa: PLC0415
+        compute_diff,
+    )
+    from scalemyprints.domain.spy.models import ShopAuditReport  # noqa: PLC0415
+
+    try:
+        previous = ShopAuditReport.model_validate(payload.previous)
+        current = ShopAuditReport.model_validate(payload.current)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"code": "invalid_audit", "message": str(e)},
+        ) from e
+
+    diff = compute_diff(previous=previous, current=current)
+    return success(
+        CompetitorDiffResponse(
+            marketplace=diff.marketplace,
+            handle=diff.handle,
+            previous_at=diff.previous_at,
+            current_at=diff.current_at,
+            new_listings=diff.new_listings,
+            removed_listings=diff.removed_listings,
+            price_changes=diff.price_changes,
+            restock_signals=diff.restock_signals,
+            velocity_movers=diff.velocity_movers,
+            note=diff.note,
+        )
+    )
+
+
+@router.post("/seasonality", response_model=ApiSuccess[SeasonalityResponse])
+async def spy_seasonality(
+    payload: SeasonalityBody,
+    user: Annotated[CurrentUser, Depends(get_current_user)],
+    container: Annotated[ServiceContainer, Depends(get_service_container)],
+) -> ApiSuccess[SeasonalityResponse]:
+    bind_request_context(user_id=user.id)
+    forecast = await container.spy_seasonality_service.forecast(
+        seed=payload.seed,
+        horizon_days=payload.horizon_days,
+        country=payload.country,
+        lag_days=payload.lag_days,
+    )
+    return success(
+        SeasonalityResponse(
+            seed=forecast.seed,
+            windows=[
+                SeasonalityWindowItem(
+                    name=w.name,
+                    starts_at=w.starts_at,
+                    peaks_at=w.peaks_at,
+                    ends_at=w.ends_at,
+                    confidence=w.confidence,
+                    suggested_drop_by=w.suggested_drop_by,
+                    rationale=w.rationale,
+                    related_event=w.related_event,
+                )
+                for w in forecast.windows
+            ],
+            horizon_days=forecast.horizon_days,
+            computed_at=forecast.computed_at,
+        )
+    )
+
+
+@router.post("/api-keys", response_model=ApiSuccess[ApiKeyCreatedResponse])
+async def spy_create_api_key(
+    payload: ApiKeyCreateBody,
+    user: Annotated[CurrentUser, Depends(get_current_user)],
+    container: Annotated[ServiceContainer, Depends(get_service_container)],
+) -> ApiSuccess[ApiKeyCreatedResponse]:
+    bind_request_context(user_id=user.id)
+    store = container.spy_api_key_store
+    key, raw = await store.create(user_id=user.id, label=payload.label)
+    return success(
+        ApiKeyCreatedResponse(
+            key=ApiKeyItem(
+                id=key.id,
+                label=key.label,
+                prefix=key.prefix,
+                scopes=key.scopes,
+                revoked=key.revoked,
+                last_used_at=key.last_used_at,
+                created_at=key.created_at,
+            ),
+            clear_text=raw,
+        )
+    )
+
+
+@router.get("/api-keys", response_model=ApiSuccess[list[ApiKeyItem]])
+async def spy_list_api_keys(
+    user: Annotated[CurrentUser, Depends(get_current_user)],
+    container: Annotated[ServiceContainer, Depends(get_service_container)],
+) -> ApiSuccess[list[ApiKeyItem]]:
+    bind_request_context(user_id=user.id)
+    rows = await container.spy_api_key_store.list_for_user(user.id)
+    return success(
+        [
+            ApiKeyItem(
+                id=k.id,
+                label=k.label,
+                prefix=k.prefix,
+                scopes=k.scopes,
+                revoked=k.revoked,
+                last_used_at=k.last_used_at,
+                created_at=k.created_at,
+            )
+            for k in rows
+        ]
+    )
+
+
+@router.delete("/api-keys/{key_id}", response_model=ApiSuccess[dict[str, object]])
+async def spy_revoke_api_key(
+    key_id: str,
+    user: Annotated[CurrentUser, Depends(get_current_user)],
+    container: Annotated[ServiceContainer, Depends(get_service_container)],
+) -> ApiSuccess[dict[str, object]]:
+    bind_request_context(user_id=user.id)
+    ok = await container.spy_api_key_store.revoke(key_id, user.id)
+    if not ok:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "not_found", "message": "API key not found"},
+        )
+    return success({"id": key_id, "revoked": True})
