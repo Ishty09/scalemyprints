@@ -97,6 +97,18 @@ class AlertStore(Protocol):
         delivered_channels: list[AlertChannel],
     ) -> None: ...
 
+    async def list_pending(
+        self,
+        *,
+        limit: int = 100,
+    ) -> list[Alert]:
+        """Return up to `limit` alerts in status=pending across all users.
+
+        Used by the cron-driven dispatcher to fan alerts out through
+        their configured channels (Slack / webhook / email).
+        """
+        ...
+
 
 @runtime_checkable
 class AlertDispatcher(Protocol):
@@ -240,11 +252,35 @@ class WatchlistService:
         user_id: str | None = None,
         limit: int = 50,
     ) -> DeliveryResult:
-        # In a richer impl this would query for status=pending alerts.
-        # Phase 4 ships with the simpler "deliver immediately on create"
-        # flow used by tests, so we leave this as a placeholder for
-        # cron callers.
-        return DeliveryResult(attempted=0, delivered=0, failed=0)
+        """
+        Pop pending alerts and fan out through each watchlist's configured
+        channels. Called by the cron `/_internal/deliver-alerts` route.
+
+        `user_id` is reserved for the per-user dashboard "send now"
+        button — Phase 4.7 ignores it and dispatches across all users.
+        """
+        pending = await self._a.list_pending(limit=limit)
+
+        attempted_total = 0
+        delivered_total = 0
+        failed_total = 0
+        by_channel: dict[str, int] = {}
+
+        for alert in pending:
+            updated = await self.deliver_now(alert)
+            attempted_total += len(updated.channels_attempted)
+            delivered_total += len(updated.channels_delivered)
+            if not updated.channels_delivered:
+                failed_total += 1
+            for ch in updated.channels_delivered:
+                by_channel[ch.value] = by_channel.get(ch.value, 0) + 1
+
+        return DeliveryResult(
+            attempted=attempted_total,
+            delivered=delivered_total,
+            failed=failed_total,
+            by_channel=by_channel,
+        )
 
     async def deliver_now(self, alert: Alert) -> Alert:
         """Synchronously dispatch a single alert across all channels."""

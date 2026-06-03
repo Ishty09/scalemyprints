@@ -75,7 +75,14 @@ export function SpySearchForm({
         <div className="flex flex-wrap gap-2">
           {MARKETPLACES.map((mkt) => {
             const active = selected.includes(mkt)
-            const supported = ['etsy', 'amazon_merch', 'redbubble'].includes(mkt)
+            const supported = [
+              'etsy',
+              'amazon_merch',
+              'redbubble',
+              'teepublic',
+              'society6',
+              'zazzle',
+            ].includes(mkt)
             return (
               <button
                 key={mkt}

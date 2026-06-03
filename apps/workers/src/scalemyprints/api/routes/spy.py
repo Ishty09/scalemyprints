@@ -65,6 +65,8 @@ from scalemyprints.api.schemas.spy import (
     TagMineResponse,
     TMOverlayBody,
     TMOverlayResponse,
+    DeliverAlertsBody,
+    DeliverAlertsResponse,
     VelocityRefreshBody,
     VelocityRefreshResponse,
     ViralFeedResponse,
@@ -1007,3 +1009,43 @@ async def spy_revoke_api_key(
             detail={"code": "not_found", "message": "API key not found"},
         )
     return success({"id": key_id, "revoked": True})
+
+
+# ---------------------------------------------------------------------------
+# POST /_internal/deliver-alerts  (cron-only, secured by header)
+# ---------------------------------------------------------------------------
+
+
+@router.post(
+    "/_internal/deliver-alerts",
+    response_model=ApiSuccess[DeliverAlertsResponse],
+)
+async def spy_deliver_alerts(
+    payload: DeliverAlertsBody,
+    request: Request,
+    container: Annotated[ServiceContainer, Depends(get_service_container)],
+) -> ApiSuccess[DeliverAlertsResponse]:
+    """Pop pending alerts and dispatch them through configured channels."""
+    settings = get_settings()
+    secret = settings.internal_api_secret.get_secret_value()
+    if not secret:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={"code": "internal_secret_not_configured", "message": "cron disabled"},
+        )
+    provided = request.headers.get("x-internal-secret", "")
+    if provided != secret:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"code": "unauthorized", "message": "missing or bad internal secret"},
+        )
+
+    result = await container.spy_watchlist_service.deliver_pending(limit=payload.limit)
+    return success(
+        DeliverAlertsResponse(
+            attempted=result.attempted,
+            delivered=result.delivered,
+            failed=result.failed,
+            by_channel=result.by_channel,
+        )
+    )

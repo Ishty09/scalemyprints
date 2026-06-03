@@ -103,6 +103,9 @@ from scalemyprints.infrastructure.spy_storage.supabase_watchlist_store import (
 from scalemyprints.infrastructure.spy_apis.etsy_spy import EtsySpyAdapter
 from scalemyprints.infrastructure.spy_apis.merch_spy import MerchSpyAdapter
 from scalemyprints.infrastructure.spy_apis.redbubble_spy import RedbubbleSpyAdapter
+from scalemyprints.infrastructure.spy_apis.society6_spy import Society6SpyAdapter
+from scalemyprints.infrastructure.spy_apis.teepublic_spy import TeepublicSpyAdapter
+from scalemyprints.infrastructure.spy_apis.zazzle_spy import ZazzleSpyAdapter
 from scalemyprints.infrastructure.spy_storage.hot_movers import (
     HotMoversProvider,
     MemoryHotMoversProvider,
@@ -521,6 +524,12 @@ class ServiceContainer:
             )
         if self._settings.spy_redbubble_enabled:
             out.append(RedbubbleSpyAdapter(proxy_url=proxy))
+        if self._settings.spy_teepublic_enabled:
+            out.append(TeepublicSpyAdapter(proxy_url=proxy))
+        if self._settings.spy_society6_enabled:
+            out.append(Society6SpyAdapter(proxy_url=proxy))
+        if self._settings.spy_zazzle_enabled:
+            out.append(ZazzleSpyAdapter(proxy_url=proxy))
         return out
 
     def _build_spy_listing_store(self) -> ListingStore:

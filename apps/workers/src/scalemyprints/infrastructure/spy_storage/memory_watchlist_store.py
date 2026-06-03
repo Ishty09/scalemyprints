@@ -148,6 +148,11 @@ class MemoryAlertStore(AlertStore):
             }
         )
 
+    async def list_pending(self, *, limit: int = 100) -> list[Alert]:
+        rows = [r for r in self._rows.values() if r.status == AlertStatus.PENDING]
+        rows.sort(key=lambda r: r.created_at)
+        return rows[:limit]
+
     def clear(self) -> None:
         self._rows.clear()
 

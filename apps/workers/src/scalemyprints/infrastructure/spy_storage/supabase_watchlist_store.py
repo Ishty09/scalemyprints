@@ -276,6 +276,19 @@ class SupabaseAlertStore(_PostgrestBase, AlertStore):
         }
         await client.patch(url, params=params, headers=self._headers, json=payload)
 
+    async def list_pending(self, *, limit: int = 100) -> list[Alert]:
+        client = await self._http()
+        url = f"{self._url}/rest/v1/spy_alerts"
+        params = {
+            "status": "eq.pending",
+            "select": "*",
+            "order": "created_at.asc",
+            "limit": str(limit),
+        }
+        resp = await client.get(url, params=params, headers=self._headers)
+        resp.raise_for_status()
+        return [_row_to_alert(r) for r in resp.json()]
+
 
 # -----------------------------------------------------------------------------
 # API keys

@@ -615,5 +615,21 @@ class ApiKeyCreatedResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
     key: ApiKeyItem
     clear_text: str
-    reviews_count: int | None
-    last_seen_at: datetime
+
+
+# ---------------------------------------------------------------------------
+# POST /_internal/deliver-alerts (cron)
+# ---------------------------------------------------------------------------
+
+
+class DeliverAlertsBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    limit: int = Field(default=50, ge=1, le=500)
+
+
+class DeliverAlertsResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    attempted: int
+    delivered: int
+    failed: int
+    by_channel: dict[str, int]

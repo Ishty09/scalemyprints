@@ -193,6 +193,10 @@ class Settings(BaseSettings):
     spy_viral_reddit_enabled: bool = True
     spy_viral_tiktok_enabled: bool = True
     spy_viral_twitter_enabled: bool = True
+    # Phase 4.7 marketplace toggles
+    spy_teepublic_enabled: bool = True
+    spy_society6_enabled: bool = True
+    spy_zazzle_enabled: bool = True
 
     # ---------------- Validators ----------------
 
