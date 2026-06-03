@@ -500,6 +500,21 @@ async def spy_refresh_velocity(
     )
     service = container.spy_velocity_refresh_service
     summary = await service.refresh(candidates)
+
+    # Close the alert loop — emit watchlist alerts for any spikes that
+    # match a user's watchlist, then dispatch through configured channels.
+    if summary.velocity_signals:
+        watchlist_service = container.spy_watchlist_service
+        try:
+            await watchlist_service.evaluate(
+                velocity_signals=summary.velocity_signals,
+            )
+            # Best-effort fan-out — pending alerts dispatch synchronously.
+            # The store interface doesn't expose "pending list" yet, so
+            # for cron we settle for evaluate(). Phase 5 adds the
+            # deliver_pending loop.
+        except Exception as e:  # noqa: BLE001
+            logger.warning("spy_velocity_alert_evaluate_failed", error=str(e))
     return success(
         VelocityRefreshResponse(
             started_at=summary.started_at,
